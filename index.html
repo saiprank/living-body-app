@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Living Body App</title>
+<style>
+  :root {
+    --bg: #10141c; --panel: #1b2130; --border: #2c3550; --text: #e8ecf5;
+    --accent: #ff5d7a; --accent2: #4fc3f7; --accent3: #7bd389; --muted: #8b93a7;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin:0; height:100%; overflow:hidden; }
+  body { background:var(--bg); font-family: -apple-system, Segoe UI, Roboto, sans-serif; color: var(--text); display:flex; flex-direction:column; }
+  #layout { display: flex; flex:1; min-height:0; }
+  #canvasWrap { flex: 1; position: relative; min-height: 0; }
+  svg { width: 100%; height: 100%; display:block; touch-action: pan-x pan-y; }
+  #panel { width: 340px; background: var(--panel); border-left: 1px solid var(--border); padding: 16px; overflow-y:auto; -webkit-overflow-scrolling: touch; }
+
+  @media (max-width: 900px) {
+    #panel { width: 280px; padding: 12px; }
+    .metric-value { font-size: 19px; }
+  }
+
+  @media (max-width: 640px) {
+    #layout { flex-direction: column; height: auto; min-height: 100vh; min-height: 100dvh; overflow-y: auto; }
+    #canvasWrap { flex: none; height: 46vh; height: 46dvh; width: 100%; }
+    #panel { width: 100%; max-height: none; border-left: none; border-top: 1px solid var(--border); padding: 14px; padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+    .row { flex-wrap: wrap; }
+    .row .metric-card { min-width: 45%; }
+    input[type=range] { height: 28px; }
+    .btn, .custom-param .del { min-height: 40px; }
+    #addForm input, #addForm select { min-height: 40px; font-size: 14px; }
+    h2 { font-size: 16px; }
+    .metric-value { font-size: 20px; }
+  }
+  h2 { font-size: 15px; margin: 0 0 4px 0; }
+  h3 { font-size: 12px; color: var(--muted); text-transform:uppercase; letter-spacing:.5px; margin: 18px 0 8px 0; border-top:1px solid var(--border); padding-top:14px; }
+  .sub { color: var(--muted); font-size: 12px; margin-bottom: 14px; }
+  .metric-card { background:#141925; border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
+  .metric-label { font-size:11px; color:var(--muted); text-transform:uppercase; }
+  .metric-value { font-size:22px; font-weight:600; margin-top:2px; }
+  .metric-unit { font-size:11px; color:var(--muted); font-weight:400; margin-left:3px;}
+  .row { display:flex; gap:8px; }
+  .row .metric-card { flex:1; }
+  .control { margin: 12px 0; }
+  .control label { font-size:12px; color: var(--muted); display:flex; justify-content:space-between; margin-bottom:5px; }
+  .control input[type=range] { width:100%; accent-color: var(--accent); }
+  .legend { display:flex; gap:12px; font-size:10px; color:var(--muted); margin-top:6px; flex-wrap:wrap;}
+  .legend span { display:flex; align-items:center; gap:4px; }
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  #status { font-size:12px; padding:8px 10px; border-radius:8px; margin-top:8px; }
+  .status-ok { background: rgba(123,211,137,0.12); color:#7bd389; border:1px solid rgba(123,211,137,0.3);}
+  .status-warn { background: rgba(255,180,80,0.12); color:#ffb450; border:1px solid rgba(255,180,80,0.3);}
+  .status-crit { background: rgba(255,93,122,0.12); color:#ff5d7a; border:1px solid rgba(255,93,122,0.3);}
+  #tooltip { position:absolute; background:#0d1119; border:1px solid var(--border); padding:6px 10px; border-radius:6px; font-size:12px; pointer-events:none; display:none; }
+  .custom-param { background:#141925; border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px; position:relative; }
+  .custom-param .del { position:absolute; top:8px; right:8px; cursor:pointer; color:var(--muted); font-size:14px; background:none; border:none; }
+  .custom-param .del:hover { color: var(--accent); }
+  #addForm { display:none; background:#141925; border:1px solid var(--border); border-radius:10px; padding:12px; margin-top:8px; }
+  #addForm.open { display:block; }
+  #addForm input, #addForm select { width:100%; margin-bottom:8px; padding:6px 8px; background:#0d1119; border:1px solid var(--border); color:var(--text); border-radius:6px; font-size:12px; }
+  #addForm label { font-size:11px; color:var(--muted); display:block; margin-bottom:3px; }
+  .btn { background: var(--accent2); color:#0d1119; border:none; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; width:100%; }
+  .btn-secondary { background: transparent; border:1px solid var(--border); color: var(--text); }
+  .field-row { display:flex; gap:8px; }
+  .field-row > div { flex:1; }
+  #loadMsg { font-size:11px; color:var(--muted); text-align:center; padding:6px; }
+  #newsBanner { background:#0d1119; border-bottom:1px solid var(--border); padding:8px 0; overflow:hidden; white-space:nowrap; position:relative; flex-shrink:0; }
+  #newsBanner .tickerLabel { position:absolute; left:0; top:0; bottom:0; background:var(--accent); color:#0d1119; font-size:10px; font-weight:700; padding:8px 10px; display:flex; align-items:center; letter-spacing:.5px; z-index:2; }
+  #newsTicker { display:inline-block; padding-left:100%; animation: ticker 45s linear infinite; animation-play-state: running; font-size:12px; color:var(--muted); padding-left:calc(100% + 90px); will-change: transform; }
+  #newsTicker span { margin-right:40px; color: var(--text); }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+  #realWorldBox { background:#141925; border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
+  #realWorldBox .note { font-size:10px; color:var(--muted); margin-top:6px; line-height:1.4; }
+  #syncStatus { font-size:11px; color:var(--muted); margin-top:6px; text-align:center; }
+</style>
+</head>
+<body>
+<div id="newsBanner">
+  <div class="tickerLabel">LIVE NEWS</div>
+  <div id="newsTicker"><span>Loading latest headlines...</span></div>
+</div>
+<div id="layout">
+  <div id="canvasWrap">
+    <svg id="svg" viewBox="0 0 1200 750"></svg>
+    <div id="tooltip"></div>
+  </div>
+  <div id="panel">
+    <h2>Living Body — Vitals</h2>
+    <div class="sub">Drag sliders to change physiology. Add your own parameters below (vitamins, minerals, etc).</div>
+
+    <div id="realWorldBox">
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px;">🌍 Sync with real world</div>
+      <button class="btn" id="syncRealWorld">Sync mood + air quality now</button>
+      <div id="syncStatus">Not synced yet</div>
+      <div class="note">Stress is estimated from news headline tone (simple keyword scoring, not real sentiment AI). Oxygen is linked to your region's real air quality index — a playful mapping, not actual blood oxygen science.</div>
+    </div>
+
+    <div class="row">
+      <div class="metric-card">
+        <div class="metric-label">Heart Rate</div>
+        <div class="metric-value" id="hrValue">--<span class="metric-unit">bpm</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Resp. Rate</div>
+        <div class="metric-value" id="rrValue">--<span class="metric-unit">/min</span></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="metric-card">
+        <div class="metric-label">SpO2 (est.)</div>
+        <div class="metric-value" id="spo2Value">--<span class="metric-unit">%</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Blood Pressure</div>
+        <div class="metric-value" id="bpValue">--<span class="metric-unit">mmHg</span></div>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Cardiac Output (est.)</div>
+      <div class="metric-value" id="coValue">--<span class="metric-unit">L/min</span></div>
+    </div>
+    <div id="status" class="status-ok">Vitals within normal range</div>
+
+    <h3>Core vitals</h3>
+    <div class="control">
+      <label><span>Heart Rate</span><span id="hrLabel">72 bpm</span></label>
+      <input type="range" id="hrSlider" min="40" max="180" value="72">
+    </div>
+    <div class="control">
+      <label><span>Breathing Rate</span><span id="rrLabel">14 /min</span></label>
+      <input type="range" id="rrSlider" min="6" max="40" value="14">
+    </div>
+    <div class="control">
+      <label><span>Stress / Exertion</span><span id="stressLabel">20%</span></label>
+      <input type="range" id="stressSlider" min="0" max="100" value="20">
+    </div>
+    <div class="control">
+      <label><span>Blood Oxygen Level</span><span id="o2Label">98%</span></label>
+      <input type="range" id="o2Slider" min="70" max="100" value="98">
+    </div>
+
+    <h3>Your custom parameters</h3>
+    <div id="loadMsg">Loading saved parameters...</div>
+    <div id="customParamsList"></div>
+
+    <button class="btn btn-secondary" id="toggleAddForm" style="margin-top:8px;">+ Add parameter</button>
+    <div id="addForm">
+      <label>Name (e.g. Vitamin D, Iron, Magnesium)</label>
+      <input type="text" id="newParamName" placeholder="Vitamin D">
+      <div class="field-row">
+        <div><label>Unit</label><input type="text" id="newParamUnit" placeholder="ng/mL"></div>
+        <div><label>Default value</label><input type="number" id="newParamDefault" placeholder="30"></div>
+      </div>
+      <div class="field-row">
+        <div><label>Min</label><input type="number" id="newParamMin" placeholder="0"></div>
+        <div><label>Max</label><input type="number" id="newParamMax" placeholder="100"></div>
+      </div>
+      <div class="field-row">
+        <div><label>Healthy min</label><input type="number" id="newParamHealthyMin" placeholder="20"></div>
+        <div><label>Healthy max</label><input type="number" id="newParamHealthyMax" placeholder="50"></div>
+      </div>
+      <label>Affects organ (dims/glows when out of healthy range)</label>
+      <select id="newParamOrgan"></select>
+      <button class="btn" id="saveNewParam">Save parameter</button>
+    </div>
+
+    <div class="legend">
+      <span><span class="dot" style="background:#e07b39"></span>Hub / MOC</span>
+      <span><span class="dot" style="background:#4fc3f7"></span>Body System</span>
+      <span><span class="dot" style="background:#7bd389"></span>Organ / Part</span>
+      <span><span class="dot" style="background:#ff5d7a"></span>Heart (live)</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const graphData = {"nodes": [{"id": "Nose (Smell)", "x": 381.8, "y": 690.0, "type": "organ", "size": 9.0}, {"id": "Cerebrum", "x": 128.4, "y": 511.9, "type": "organ", "size": 9.0}, {"id": "Spine", "x": 1070.8, "y": 401.0, "type": "organ", "size": 9.0}, {"id": "Digestive System", "x": 264.5, "y": 287.2, "type": "system", "size": 21.0}, {"id": "Nervous System", "x": 303.3, "y": 453.6, "type": "system", "size": 21.666666666666664}, {"id": "Adrenal Glands", "x": 535.4, "y": 611.2, "type": "organ", "size": 9.0}, {"id": "Skull", "x": 837.2, "y": 319.7, "type": "organ", "size": 9.0}, {"id": "Small Intestine", "x": 324.0, "y": 237.2, "type": "organ", "size": 10.333333333333332}, {"id": "Gallbladder", "x": 69.3, "y": 240.1, "type": "organ", "size": 9.0}, {"id": "Endocrine System", "x": 450.0, "y": 538.1, "type": "system", "size": 17.0}, {"id": "Bladder", "x": 810.7, "y": 483.6, "type": "organ", "size": 9.666666666666666}, {"id": "Bronchi", "x": 141.4, "y": 260.2, "type": "organ", "size": 9.0}, {"id": "Reproductive System", "x": 939.6, "y": 437.6, "type": "system", "size": 15.666666666666666}, {"id": "Ovaries", "x": 447.4, "y": 663.7, "type": "organ", "size": 9.0}, {"id": "Urethra", "x": 1043.8, "y": 518.1, "type": "organ", "size": 9.0}, {"id": "Spleen", "x": 634.0, "y": 401.0, "type": "organ", "size": 10.0}, {"id": "Spinal Cord", "x": 171.0, "y": 517.6, "type": "organ", "size": 9.666666666666666}, {"id": "Cerebellum", "x": 184.2, "y": 548.3, "type": "organ", "size": 9.0}, {"id": "Aorta", "x": 869.8, "y": 164.0, "type": "organ", "size": 9.0}, {"id": "Trachea", "x": 321.0, "y": 129.6, "type": "organ", "size": 9.0}, {"id": "Sebaceous Glands", "x": 280.0, "y": 449.0, "type": "organ", "size": 9.0}, {"id": "Cardiac Muscle", "x": 694.2, "y": 82.1, "type": "organ", "size": 9.0}, {"id": "Sweat Glands", "x": 281.3, "y": 624.2, "type": "organ", "size": 9.666666666666666}, {"id": "Nose", "x": 295.0, "y": 340.1, "type": "organ", "size": 9.0}, {"id": "Skin", "x": 265.2, "y": 555.3, "type": "organ", "size": 10.333333333333332}, {"id": "Synapses", "x": 366.4, "y": 383.6, "type": "organ", "size": 9.0}, {"id": "Lymphocytes", "x": 721.4, "y": 634.2, "type": "organ", "size": 9.0}, {"id": "Skeletal Muscles", "x": 430.2, "y": 285.6, "type": "organ", "size": 10.333333333333332}, {"id": "Alveoli", "x": 124.5, "y": 289.0, "type": "organ", "size": 9.0}, {"id": "Human Body MOC", "x": 568.6, "y": 399.0, "type": "moc", "size": 23.666666666666668}, {"id": "Testes (Reproductive)", "x": 1140.0, "y": 445.8, "type": "organ", "size": 9.0}, {"id": "Thyroid", "x": 314.1, "y": 517.0, "type": "organ", "size": 9.0}, {"id": "Brainstem", "x": 263.1, "y": 365.7, "type": "organ", "size": 9.0}, {"id": "Circulatory System", "x": 737.8, "y": 247.1, "type": "system", "size": 22.333333333333332}, {"id": "Arteries", "x": 889.8, "y": 201.4, "type": "organ", "size": 9.0}, {"id": "Uterus", "x": 1076.0, "y": 349.4, "type": "organ", "size": 9.0}, {"id": "Esophagus", "x": 138.3, "y": 194.0, "type": "organ", "size": 9.0}, {"id": "Skeletal System", "x": 887.0, "y": 419.6, "type": "system", "size": 21.0}, {"id": "Peripheral Nerves", "x": 144.4, "y": 442.1, "type": "organ", "size": 9.0}, {"id": "Plasma", "x": 710.5, "y": 154.2, "type": "organ", "size": 9.0}, {"id": "Integumentary System", "x": 373.2, "y": 528.2, "type": "system", "size": 15.666666666666666}, {"id": "Immune System", "x": 661.4, "y": 525.3, "type": "system", "size": 16.666666666666664}, {"id": "Urinary System", "x": 848.4, "y": 477.3, "type": "system", "size": 15.666666666666666}, {"id": "Ovaries (Reproductive)", "x": 997.7, "y": 536.9, "type": "organ", "size": 9.0}, {"id": "Large Intestine", "x": 425.5, "y": 359.6, "type": "organ", "size": 9.0}, {"id": "Bone Marrow", "x": 810.8, "y": 406.7, "type": "organ", "size": 11.0}, {"id": "Brain", "x": 249.8, "y": 578.3, "type": "organ", "size": 12.333333333333332}, {"id": "White Blood Cells", "x": 837.6, "y": 328.9, "type": "organ", "size": 9.666666666666666}, {"id": "Tongue", "x": 605.1, "y": 627.8, "type": "organ", "size": 9.0}, {"id": "Hair", "x": 228.3, "y": 635.8, "type": "organ", "size": 9.0}, {"id": "Pelvis", "x": 703.4, "y": 398.7, "type": "organ", "size": 9.0}, {"id": "Heart", "x": 611.3, "y": 198.9, "type": "organ", "size": 10.333333333333332}, {"id": "Ribs", "x": 1003.9, "y": 473.3, "type": "organ", "size": 9.0}, {"id": "Femur", "x": 1084.1, "y": 468.2, "type": "organ", "size": 9.0}, {"id": "Hypothalamus", "x": 309.6, "y": 545.4, "type": "organ", "size": 11.0}, {"id": "Smooth Muscles", "x": 559.2, "y": 60.0, "type": "organ", "size": 9.0}, {"id": "Humerus", "x": 1025.0, "y": 434.1, "type": "organ", "size": 9.0}, {"id": "Sensory Organs", "x": 466.3, "y": 586.0, "type": "system", "size": 15.666666666666666}, {"id": "Ears", "x": 347.1, "y": 607.0, "type": "organ", "size": 9.666666666666666}, {"id": "Diaphragm", "x": 330.4, "y": 152.8, "type": "organ", "size": 9.666666666666666}, {"id": "Pharynx", "x": 172.3, "y": 274.3, "type": "organ", "size": 9.0}, {"id": "Lymph Nodes", "x": 577.9, "y": 652.6, "type": "organ", "size": 9.0}, {"id": "Veins", "x": 830.3, "y": 137.4, "type": "organ", "size": 9.0}, {"id": "Ureters", "x": 901.2, "y": 589.7, "type": "organ", "size": 9.0}, {"id": "Nails", "x": 529.4, "y": 510.1, "type": "organ", "size": 9.0}, {"id": "Eyes", "x": 325.2, "y": 662.5, "type": "organ", "size": 9.666666666666666}, {"id": "Kidneys", "x": 744.0, "y": 393.7, "type": "organ", "size": 10.333333333333332}, {"id": "Mouth", "x": 133.9, "y": 371.1, "type": "organ", "size": 9.0}, {"id": "Prostate", "x": 1084.2, "y": 373.0, "type": "organ", "size": 9.0}, {"id": "Fallopian Tubes", "x": 1025.0, "y": 556.0, "type": "organ", "size": 9.0}, {"id": "Pancreas", "x": 401.4, "y": 232.8, "type": "organ", "size": 10.333333333333332}, {"id": "Rectum", "x": 95.7, "y": 210.8, "type": "organ", "size": 9.0}, {"id": "Ligaments", "x": 614.0, "y": 62.7, "type": "organ", "size": 9.0}, {"id": "Capillaries", "x": 608.8, "y": 243.2, "type": "organ", "size": 9.0}, {"id": "Larynx", "x": 163.1, "y": 138.8, "type": "organ", "size": 9.0}, {"id": "Pituitary Gland", "x": 319.5, "y": 579.4, "type": "organ", "size": 10.333333333333332}, {"id": "Nephrons", "x": 1034.3, "y": 470.9, "type": "organ", "size": 9.0}, {"id": "Muscular System", "x": 566.5, "y": 185.5, "type": "system", "size": 15.666666666666666}, {"id": "Platelets", "x": 735.6, "y": 330.6, "type": "organ", "size": 9.0}, {"id": "Liver", "x": 399.8, "y": 254.8, "type": "organ", "size": 10.333333333333332}, {"id": "Blood", "x": 576.3, "y": 279.6, "type": "organ", "size": 13.0}, {"id": "Neurons", "x": 411.1, "y": 381.7, "type": "organ", "size": 9.0}, {"id": "Joints", "x": 1014.7, "y": 512.2, "type": "organ", "size": 9.0}, {"id": "Antibodies", "x": 713.8, "y": 656.4, "type": "organ", "size": 9.0}, {"id": "Thymus", "x": 503.4, "y": 485.7, "type": "organ", "size": 9.0}, {"id": "Lungs", "x": 452.6, "y": 195.5, "type": "organ", "size": 11.0}, {"id": "Testes", "x": 569.9, "y": 453.2, "type": "organ", "size": 9.0}, {"id": "Red Blood Cells", "x": 863.2, "y": 288.9, "type": "organ", "size": 9.666666666666666}, {"id": "Cartilage", "x": 831.9, "y": 358.9, "type": "organ", "size": 9.0}, {"id": "Stomach", "x": 60.0, "y": 285.9, "type": "organ", "size": 9.0}, {"id": "Skin (Touch)", "x": 524.3, "y": 544.2, "type": "organ", "size": 9.0}, {"id": "Tendons", "x": 476.3, "y": 168.2, "type": "organ", "size": 9.666666666666666}, {"id": "Respiratory System", "x": 293.6, "y": 237.8, "type": "system", "size": 21.0}, {"id": "Bronchioles", "x": 208.1, "y": 121.0, "type": "organ", "size": 9.0}], "edges": [{"from": "Nose (Smell)", "to": "Sensory Organs"}, {"from": "Nose (Smell)", "to": "Sensory Organs"}, {"from": "Cerebrum", "to": "Nervous System"}, {"from": "Cerebrum", "to": "Nervous System"}, {"from": "Spine", "to": "Skeletal System"}, {"from": "Spine", "to": "Skeletal System"}, {"from": "Digestive System", "to": "Human Body MOC"}, {"from": "Digestive System", "to": "Mouth"}, {"from": "Digestive System", "to": "Esophagus"}, {"from": "Digestive System", "to": "Stomach"}, {"from": "Digestive System", "to": "Small Intestine"}, {"from": "Digestive System", "to": "Large Intestine"}, {"from": "Digestive System", "to": "Liver"}, {"from": "Digestive System", "to": "Pancreas"}, {"from": "Digestive System", "to": "Gallbladder"}, {"from": "Digestive System", "to": "Rectum"}, {"from": "Digestive System", "to": "Esophagus"}, {"from": "Digestive System", "to": "Gallbladder"}, {"from": "Digestive System", "to": "Human Body MOC"}, {"from": "Digestive System", "to": "Large Intestine"}, {"from": "Digestive System", "to": "Liver"}, {"from": "Digestive System", "to": "Mouth"}, {"from": "Digestive System", "to": "Pancreas"}, {"from": "Digestive System", "to": "Rectum"}, {"from": "Digestive System", "to": "Small Intestine"}, {"from": "Digestive System", "to": "Stomach"}, {"from": "Nervous System", "to": "Human Body MOC"}, {"from": "Nervous System", "to": "Brain"}, {"from": "Nervous System", "to": "Spinal Cord"}, {"from": "Nervous System", "to": "Neurons"}, {"from": "Nervous System", "to": "Cerebrum"}, {"from": "Nervous System", "to": "Cerebellum"}, {"from": "Nervous System", "to": "Brainstem"}, {"from": "Nervous System", "to": "Peripheral Nerves"}, {"from": "Nervous System", "to": "Synapses"}, {"from": "Nervous System", "to": "Brain"}, {"from": "Nervous System", "to": "Brainstem"}, {"from": "Nervous System", "to": "Cerebellum"}, {"from": "Nervous System", "to": "Cerebrum"}, {"from": "Nervous System", "to": "Human Body MOC"}, {"from": "Nervous System", "to": "Hypothalamus"}, {"from": "Nervous System", "to": "Neurons"}, {"from": "Nervous System", "to": "Peripheral Nerves"}, {"from": "Nervous System", "to": "Skeletal Muscles"}, {"from": "Nervous System", "to": "Skin"}, {"from": "Nervous System", "to": "Spinal Cord"}, {"from": "Nervous System", "to": "Synapses"}, {"from": "Adrenal Glands", "to": "Endocrine System"}, {"from": "Adrenal Glands", "to": "Endocrine System"}, {"from": "Skull", "to": "Skeletal System"}, {"from": "Skull", "to": "Skeletal System"}, {"from": "Small Intestine", "to": "Digestive System"}, {"from": "Small Intestine", "to": "Digestive System"}, {"from": "Small Intestine", "to": "Liver"}, {"from": "Small Intestine", "to": "Pancreas"}, {"from": "Gallbladder", "to": "Digestive System"}, {"from": "Gallbladder", "to": "Digestive System"}, {"from": "Endocrine System", "to": "Human Body MOC"}, {"from": "Endocrine System", "to": "Pituitary Gland"}, {"from": "Endocrine System", "to": "Thyroid"}, {"from": "Endocrine System", "to": "Adrenal Glands"}, {"from": "Endocrine System", "to": "Ovaries"}, {"from": "Endocrine System", "to": "Testes"}, {"from": "Endocrine System", "to": "Hypothalamus"}, {"from": "Endocrine System", "to": "Adrenal Glands"}, {"from": "Endocrine System", "to": "Human Body MOC"}, {"from": "Endocrine System", "to": "Hypothalamus"}, {"from": "Endocrine System", "to": "Ovaries"}, {"from": "Endocrine System", "to": "Pituitary Gland"}, {"from": "Endocrine System", "to": "Testes"}, {"from": "Endocrine System", "to": "Thyroid"}, {"from": "Bladder", "to": "Urinary System"}, {"from": "Bladder", "to": "Kidneys"}, {"from": "Bladder", "to": "Urinary System"}, {"from": "Bronchi", "to": "Respiratory System"}, {"from": "Bronchi", "to": "Respiratory System"}, {"from": "Reproductive System", "to": "Human Body MOC"}, {"from": "Reproductive System", "to": "Uterus"}, {"from": "Reproductive System", "to": "Ovaries (Reproductive)"}, {"from": "Reproductive System", "to": "Fallopian Tubes"}, {"from": "Reproductive System", "to": "Testes (Reproductive)"}, {"from": "Reproductive System", "to": "Prostate"}, {"from": "Reproductive System", "to": "Fallopian Tubes"}, {"from": "Reproductive System", "to": "Human Body MOC"}, {"from": "Reproductive System", "to": "Ovaries (Reproductive)"}, {"from": "Reproductive System", "to": "Prostate"}, {"from": "Reproductive System", "to": "Testes (Reproductive)"}, {"from": "Reproductive System", "to": "Uterus"}, {"from": "Ovaries", "to": "Endocrine System"}, {"from": "Ovaries", "to": "Endocrine System"}, {"from": "Urethra", "to": "Urinary System"}, {"from": "Urethra", "to": "Urinary System"}, {"from": "Spleen", "to": "Immune System"}, {"from": "Spleen", "to": "Blood"}, {"from": "Spleen", "to": "Immune System"}, {"from": "Spleen", "to": "Immune System"}, {"from": "Spinal Cord", "to": "Nervous System"}, {"from": "Spinal Cord", "to": "Brain"}, {"from": "Spinal Cord", "to": "Nervous System"}, {"from": "Cerebellum", "to": "Nervous System"}, {"from": "Cerebellum", "to": "Nervous System"}, {"from": "Aorta", "to": "Circulatory System"}, {"from": "Aorta", "to": "Circulatory System"}, {"from": "Trachea", "to": "Respiratory System"}, {"from": "Trachea", "to": "Respiratory System"}, {"from": "Sebaceous Glands", "to": "Integumentary System"}, {"from": "Sebaceous Glands", "to": "Integumentary System"}, {"from": "Cardiac Muscle", "to": "Muscular System"}, {"from": "Cardiac Muscle", "to": "Muscular System"}, {"from": "Sweat Glands", "to": "Integumentary System"}, {"from": "Sweat Glands", "to": "Integumentary System"}, {"from": "Sweat Glands", "to": "Skin"}, {"from": "Nose", "to": "Respiratory System"}, {"from": "Nose", "to": "Respiratory System"}, {"from": "Skin", "to": "Integumentary System"}, {"from": "Skin", "to": "Sweat Glands"}, {"from": "Skin", "to": "Nervous System"}, {"from": "Skin", "to": "Integumentary System"}, {"from": "Synapses", "to": "Nervous System"}, {"from": "Synapses", "to": "Nervous System"}, {"from": "Lymphocytes", "to": "Immune System"}, {"from": "Lymphocytes", "to": "Immune System"}, {"from": "Skeletal Muscles", "to": "Muscular System"}, {"from": "Skeletal Muscles", "to": "Nervous System"}, {"from": "Skeletal Muscles", "to": "Tendons"}, {"from": "Skeletal Muscles", "to": "Muscular System"}, {"from": "Alveoli", "to": "Respiratory System"}, {"from": "Alveoli", "to": "Respiratory System"}, {"from": "Human Body MOC", "to": "Circulatory System"}, {"from": "Human Body MOC", "to": "Respiratory System"}, {"from": "Human Body MOC", "to": "Nervous System"}, {"from": "Human Body MOC", "to": "Digestive System"}, {"from": "Human Body MOC", "to": "Skeletal System"}, {"from": "Human Body MOC", "to": "Muscular System"}, {"from": "Human Body MOC", "to": "Endocrine System"}, {"from": "Human Body MOC", "to": "Immune System"}, {"from": "Human Body MOC", "to": "Urinary System"}, {"from": "Human Body MOC", "to": "Integumentary System"}, {"from": "Human Body MOC", "to": "Reproductive System"}, {"from": "Human Body MOC", "to": "Sensory Organs"}, {"from": "Human Body MOC", "to": "Circulatory System"}, {"from": "Human Body MOC", "to": "Digestive System"}, {"from": "Human Body MOC", "to": "Endocrine System"}, {"from": "Human Body MOC", "to": "Immune System"}, {"from": "Human Body MOC", "to": "Integumentary System"}, {"from": "Human Body MOC", "to": "Muscular System"}, {"from": "Human Body MOC", "to": "Nervous System"}, {"from": "Human Body MOC", "to": "Reproductive System"}, {"from": "Human Body MOC", "to": "Respiratory System"}, {"from": "Human Body MOC", "to": "Sensory Organs"}, {"from": "Human Body MOC", "to": "Skeletal System"}, {"from": "Human Body MOC", "to": "Urinary System"}, {"from": "Testes (Reproductive)", "to": "Reproductive System"}, {"from": "Testes (Reproductive)", "to": "Reproductive System"}, {"from": "Thyroid", "to": "Endocrine System"}, {"from": "Thyroid", "to": "Endocrine System"}, {"from": "Brainstem", "to": "Nervous System"}, {"from": "Brainstem", "to": "Nervous System"}, {"from": "Circulatory System", "to": "Human Body MOC"}, {"from": "Circulatory System", "to": "Heart"}, {"from": "Circulatory System", "to": "Aorta"}, {"from": "Circulatory System", "to": "Arteries"}, {"from": "Circulatory System", "to": "Veins"}, {"from": "Circulatory System", "to": "Capillaries"}, {"from": "Circulatory System", "to": "Blood"}, {"from": "Circulatory System", "to": "Red Blood Cells"}, {"from": "Circulatory System", "to": "White Blood Cells"}, {"from": "Circulatory System", "to": "Platelets"}, {"from": "Circulatory System", "to": "Plasma"}, {"from": "Circulatory System", "to": "Aorta"}, {"from": "Circulatory System", "to": "Arteries"}, {"from": "Circulatory System", "to": "Blood"}, {"from": "Circulatory System", "to": "Capillaries"}, {"from": "Circulatory System", "to": "Heart"}, {"from": "Circulatory System", "to": "Human Body MOC"}, {"from": "Circulatory System", "to": "Plasma"}, {"from": "Circulatory System", "to": "Platelets"}, {"from": "Circulatory System", "to": "Red Blood Cells"}, {"from": "Circulatory System", "to": "Veins"}, {"from": "Circulatory System", "to": "White Blood Cells"}, {"from": "Arteries", "to": "Circulatory System"}, {"from": "Arteries", "to": "Circulatory System"}, {"from": "Uterus", "to": "Reproductive System"}, {"from": "Uterus", "to": "Reproductive System"}, {"from": "Esophagus", "to": "Digestive System"}, {"from": "Esophagus", "to": "Digestive System"}, {"from": "Skeletal System", "to": "Human Body MOC"}, {"from": "Skeletal System", "to": "Skull"}, {"from": "Skeletal System", "to": "Spine"}, {"from": "Skeletal System", "to": "Ribs"}, {"from": "Skeletal System", "to": "Femur"}, {"from": "Skeletal System", "to": "Pelvis"}, {"from": "Skeletal System", "to": "Humerus"}, {"from": "Skeletal System", "to": "Joints"}, {"from": "Skeletal System", "to": "Cartilage"}, {"from": "Skeletal System", "to": "Bone Marrow"}, {"from": "Skeletal System", "to": "Bone Marrow"}, {"from": "Skeletal System", "to": "Cartilage"}, {"from": "Skeletal System", "to": "Femur"}, {"from": "Skeletal System", "to": "Human Body MOC"}, {"from": "Skeletal System", "to": "Humerus"}, {"from": "Skeletal System", "to": "Joints"}, {"from": "Skeletal System", "to": "Pelvis"}, {"from": "Skeletal System", "to": "Ribs"}, {"from": "Skeletal System", "to": "Skull"}, {"from": "Skeletal System", "to": "Spine"}, {"from": "Peripheral Nerves", "to": "Nervous System"}, {"from": "Peripheral Nerves", "to": "Nervous System"}, {"from": "Plasma", "to": "Circulatory System"}, {"from": "Plasma", "to": "Circulatory System"}, {"from": "Integumentary System", "to": "Human Body MOC"}, {"from": "Integumentary System", "to": "Skin"}, {"from": "Integumentary System", "to": "Hair"}, {"from": "Integumentary System", "to": "Nails"}, {"from": "Integumentary System", "to": "Sweat Glands"}, {"from": "Integumentary System", "to": "Sebaceous Glands"}, {"from": "Integumentary System", "to": "Hair"}, {"from": "Integumentary System", "to": "Human Body MOC"}, {"from": "Integumentary System", "to": "Nails"}, {"from": "Integumentary System", "to": "Sebaceous Glands"}, {"from": "Integumentary System", "to": "Skin"}, {"from": "Integumentary System", "to": "Sweat Glands"}, {"from": "Immune System", "to": "Human Body MOC"}, {"from": "Immune System", "to": "Lymph Nodes"}, {"from": "Immune System", "to": "Spleen"}, {"from": "Immune System", "to": "Thymus"}, {"from": "Immune System", "to": "Antibodies"}, {"from": "Immune System", "to": "Lymphocytes"}, {"from": "Immune System", "to": "Antibodies"}, {"from": "Immune System", "to": "Bone Marrow"}, {"from": "Immune System", "to": "Human Body MOC"}, {"from": "Immune System", "to": "Lymph Nodes"}, {"from": "Immune System", "to": "Lymphocytes"}, {"from": "Immune System", "to": "Spleen"}, {"from": "Immune System", "to": "Thymus"}, {"from": "Urinary System", "to": "Human Body MOC"}, {"from": "Urinary System", "to": "Kidneys"}, {"from": "Urinary System", "to": "Bladder"}, {"from": "Urinary System", "to": "Ureters"}, {"from": "Urinary System", "to": "Urethra"}, {"from": "Urinary System", "to": "Nephrons"}, {"from": "Urinary System", "to": "Bladder"}, {"from": "Urinary System", "to": "Human Body MOC"}, {"from": "Urinary System", "to": "Kidneys"}, {"from": "Urinary System", "to": "Nephrons"}, {"from": "Urinary System", "to": "Ureters"}, {"from": "Urinary System", "to": "Urethra"}, {"from": "Ovaries (Reproductive)", "to": "Reproductive System"}, {"from": "Ovaries (Reproductive)", "to": "Reproductive System"}, {"from": "Large Intestine", "to": "Digestive System"}, {"from": "Large Intestine", "to": "Digestive System"}, {"from": "Bone Marrow", "to": "Skeletal System"}, {"from": "Bone Marrow", "to": "Red Blood Cells"}, {"from": "Bone Marrow", "to": "White Blood Cells"}, {"from": "Bone Marrow", "to": "Immune System"}, {"from": "Bone Marrow", "to": "Skeletal System"}, {"from": "Brain", "to": "Nervous System"}, {"from": "Brain", "to": "Spinal Cord"}, {"from": "Brain", "to": "Pituitary Gland"}, {"from": "Brain", "to": "Hypothalamus"}, {"from": "Brain", "to": "Ears"}, {"from": "Brain", "to": "Eyes"}, {"from": "Brain", "to": "Nervous System"}, {"from": "White Blood Cells", "to": "Circulatory System"}, {"from": "White Blood Cells", "to": "Bone Marrow"}, {"from": "White Blood Cells", "to": "Circulatory System"}, {"from": "Tongue", "to": "Sensory Organs"}, {"from": "Tongue", "to": "Sensory Organs"}, {"from": "Hair", "to": "Integumentary System"}, {"from": "Hair", "to": "Integumentary System"}, {"from": "Pelvis", "to": "Skeletal System"}, {"from": "Pelvis", "to": "Skeletal System"}, {"from": "Heart", "to": "Circulatory System"}, {"from": "Heart", "to": "Lungs"}, {"from": "Heart", "to": "Blood"}, {"from": "Heart", "to": "Circulatory System"}, {"from": "Ribs", "to": "Skeletal System"}, {"from": "Ribs", "to": "Skeletal System"}, {"from": "Femur", "to": "Skeletal System"}, {"from": "Femur", "to": "Skeletal System"}, {"from": "Hypothalamus", "to": "Endocrine System"}, {"from": "Hypothalamus", "to": "Pituitary Gland"}, {"from": "Hypothalamus", "to": "Nervous System"}, {"from": "Hypothalamus", "to": "Brain"}, {"from": "Hypothalamus", "to": "Endocrine System"}, {"from": "Smooth Muscles", "to": "Muscular System"}, {"from": "Smooth Muscles", "to": "Muscular System"}, {"from": "Humerus", "to": "Skeletal System"}, {"from": "Humerus", "to": "Skeletal System"}, {"from": "Sensory Organs", "to": "Human Body MOC"}, {"from": "Sensory Organs", "to": "Eyes"}, {"from": "Sensory Organs", "to": "Ears"}, {"from": "Sensory Organs", "to": "Tongue"}, {"from": "Sensory Organs", "to": "Skin (Touch)"}, {"from": "Sensory Organs", "to": "Nose (Smell)"}, {"from": "Sensory Organs", "to": "Ears"}, {"from": "Sensory Organs", "to": "Eyes"}, {"from": "Sensory Organs", "to": "Human Body MOC"}, {"from": "Sensory Organs", "to": "Nose (Smell)"}, {"from": "Sensory Organs", "to": "Skin (Touch)"}, {"from": "Sensory Organs", "to": "Tongue"}, {"from": "Ears", "to": "Sensory Organs"}, {"from": "Ears", "to": "Brain"}, {"from": "Ears", "to": "Sensory Organs"}, {"from": "Diaphragm", "to": "Respiratory System"}, {"from": "Diaphragm", "to": "Lungs"}, {"from": "Diaphragm", "to": "Respiratory System"}, {"from": "Pharynx", "to": "Respiratory System"}, {"from": "Pharynx", "to": "Respiratory System"}, {"from": "Lymph Nodes", "to": "Immune System"}, {"from": "Lymph Nodes", "to": "Immune System"}, {"from": "Veins", "to": "Circulatory System"}, {"from": "Veins", "to": "Circulatory System"}, {"from": "Ureters", "to": "Urinary System"}, {"from": "Ureters", "to": "Urinary System"}, {"from": "Nails", "to": "Integumentary System"}, {"from": "Nails", "to": "Integumentary System"}, {"from": "Eyes", "to": "Sensory Organs"}, {"from": "Eyes", "to": "Brain"}, {"from": "Eyes", "to": "Sensory Organs"}, {"from": "Kidneys", "to": "Urinary System"}, {"from": "Kidneys", "to": "Blood"}, {"from": "Kidneys", "to": "Bladder"}, {"from": "Kidneys", "to": "Urinary System"}, {"from": "Mouth", "to": "Digestive System"}, {"from": "Mouth", "to": "Digestive System"}, {"from": "Prostate", "to": "Reproductive System"}, {"from": "Prostate", "to": "Reproductive System"}, {"from": "Fallopian Tubes", "to": "Reproductive System"}, {"from": "Fallopian Tubes", "to": "Reproductive System"}, {"from": "Pancreas", "to": "Digestive System"}, {"from": "Pancreas", "to": "Small Intestine"}, {"from": "Pancreas", "to": "Blood"}, {"from": "Pancreas", "to": "Digestive System"}, {"from": "Rectum", "to": "Digestive System"}, {"from": "Rectum", "to": "Digestive System"}, {"from": "Ligaments", "to": "Muscular System"}, {"from": "Ligaments", "to": "Muscular System"}, {"from": "Capillaries", "to": "Circulatory System"}, {"from": "Capillaries", "to": "Circulatory System"}, {"from": "Larynx", "to": "Respiratory System"}, {"from": "Larynx", "to": "Respiratory System"}, {"from": "Pituitary Gland", "to": "Endocrine System"}, {"from": "Pituitary Gland", "to": "Brain"}, {"from": "Pituitary Gland", "to": "Endocrine System"}, {"from": "Pituitary Gland", "to": "Hypothalamus"}, {"from": "Nephrons", "to": "Urinary System"}, {"from": "Nephrons", "to": "Urinary System"}, {"from": "Muscular System", "to": "Human Body MOC"}, {"from": "Muscular System", "to": "Skeletal Muscles"}, {"from": "Muscular System", "to": "Smooth Muscles"}, {"from": "Muscular System", "to": "Cardiac Muscle"}, {"from": "Muscular System", "to": "Tendons"}, {"from": "Muscular System", "to": "Ligaments"}, {"from": "Muscular System", "to": "Cardiac Muscle"}, {"from": "Muscular System", "to": "Human Body MOC"}, {"from": "Muscular System", "to": "Ligaments"}, {"from": "Muscular System", "to": "Skeletal Muscles"}, {"from": "Muscular System", "to": "Smooth Muscles"}, {"from": "Muscular System", "to": "Tendons"}, {"from": "Platelets", "to": "Circulatory System"}, {"from": "Platelets", "to": "Circulatory System"}, {"from": "Liver", "to": "Digestive System"}, {"from": "Liver", "to": "Blood"}, {"from": "Liver", "to": "Small Intestine"}, {"from": "Liver", "to": "Digestive System"}, {"from": "Blood", "to": "Circulatory System"}, {"from": "Blood", "to": "Circulatory System"}, {"from": "Blood", "to": "Heart"}, {"from": "Blood", "to": "Kidneys"}, {"from": "Blood", "to": "Liver"}, {"from": "Blood", "to": "Lungs"}, {"from": "Blood", "to": "Pancreas"}, {"from": "Blood", "to": "Spleen"}, {"from": "Neurons", "to": "Nervous System"}, {"from": "Neurons", "to": "Nervous System"}, {"from": "Joints", "to": "Skeletal System"}, {"from": "Joints", "to": "Skeletal System"}, {"from": "Antibodies", "to": "Immune System"}, {"from": "Antibodies", "to": "Immune System"}, {"from": "Thymus", "to": "Immune System"}, {"from": "Thymus", "to": "Immune System"}, {"from": "Lungs", "to": "Respiratory System"}, {"from": "Lungs", "to": "Diaphragm"}, {"from": "Lungs", "to": "Blood"}, {"from": "Lungs", "to": "Heart"}, {"from": "Lungs", "to": "Respiratory System"}, {"from": "Testes", "to": "Endocrine System"}, {"from": "Testes", "to": "Endocrine System"}, {"from": "Red Blood Cells", "to": "Circulatory System"}, {"from": "Red Blood Cells", "to": "Bone Marrow"}, {"from": "Red Blood Cells", "to": "Circulatory System"}, {"from": "Cartilage", "to": "Skeletal System"}, {"from": "Cartilage", "to": "Skeletal System"}, {"from": "Stomach", "to": "Digestive System"}, {"from": "Stomach", "to": "Digestive System"}, {"from": "Skin (Touch)", "to": "Sensory Organs"}, {"from": "Skin (Touch)", "to": "Sensory Organs"}, {"from": "Tendons", "to": "Muscular System"}, {"from": "Tendons", "to": "Muscular System"}, {"from": "Tendons", "to": "Skeletal Muscles"}, {"from": "Respiratory System", "to": "Human Body MOC"}, {"from": "Respiratory System", "to": "Lungs"}, {"from": "Respiratory System", "to": "Trachea"}, {"from": "Respiratory System", "to": "Bronchi"}, {"from": "Respiratory System", "to": "Bronchioles"}, {"from": "Respiratory System", "to": "Alveoli"}, {"from": "Respiratory System", "to": "Diaphragm"}, {"from": "Respiratory System", "to": "Nose"}, {"from": "Respiratory System", "to": "Pharynx"}, {"from": "Respiratory System", "to": "Larynx"}, {"from": "Respiratory System", "to": "Alveoli"}, {"from": "Respiratory System", "to": "Bronchi"}, {"from": "Respiratory System", "to": "Bronchioles"}, {"from": "Respiratory System", "to": "Diaphragm"}, {"from": "Respiratory System", "to": "Human Body MOC"}, {"from": "Respiratory System", "to": "Larynx"}, {"from": "Respiratory System", "to": "Lungs"}, {"from": "Respiratory System", "to": "Nose"}, {"from": "Respiratory System", "to": "Pharynx"}, {"from": "Respiratory System", "to": "Trachea"}, {"from": "Bronchioles", "to": "Respiratory System"}, {"from": "Bronchioles", "to": "Respiratory System"}]};
+
+const svgNS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById('svg');
+const tooltip = document.getElementById('tooltip');
+const typeColor = { moc: '#e07b39', system: '#4fc3f7', organ: '#7bd389' };
+
+const nodeById = {};
+graphData.nodes.forEach(n => nodeById[n.id] = n);
+
+const edgeGroup = document.createElementNS(svgNS, 'g');
+edgeGroup.setAttribute('stroke', '#2c3550');
+edgeGroup.setAttribute('stroke-width', '1');
+edgeGroup.setAttribute('opacity', '0.55');
+svg.appendChild(edgeGroup);
+
+graphData.edges.forEach(e => {
+  const a = nodeById[e.from], b = nodeById[e.to];
+  if (!a || !b) return;
+  const line = document.createElementNS(svgNS, 'line');
+  line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+  line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+  edgeGroup.appendChild(line);
+});
+
+const bloodTargets = ['Lungs', 'Brain', 'Kidneys', 'Liver', 'Blood'];
+const pulseLines = [];
+const heartNode = nodeById['Heart'];
+if (heartNode) {
+  bloodTargets.forEach(t => {
+    const target = nodeById[t];
+    if (!target) return;
+    const line = document.createElementNS(svgNS, 'line');
+    line.setAttribute('x1', heartNode.x); line.setAttribute('y1', heartNode.y);
+    line.setAttribute('x2', target.x); line.setAttribute('y2', target.y);
+    line.setAttribute('stroke', '#ff5d7a');
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('opacity', '0');
+    svg.appendChild(line);
+    pulseLines.push(line);
+  });
+}
+
+const nodeGroup = document.createElementNS(svgNS, 'g');
+svg.appendChild(nodeGroup);
+const circleById = {};
+
+graphData.nodes.forEach(n => {
+  const g = document.createElementNS(svgNS, 'g');
+  const circle = document.createElementNS(svgNS, 'circle');
+  circle.setAttribute('cx', n.x);
+  circle.setAttribute('cy', n.y);
+  circle.setAttribute('r', n.size);
+  let fill = typeColor[n.type] || '#999';
+  if (n.id === 'Heart') fill = '#ff5d7a';
+  circle.setAttribute('fill', fill);
+  circle.setAttribute('stroke', '#0d1119');
+  circle.setAttribute('stroke-width', '1');
+  circle.style.cursor = 'pointer';
+  g.appendChild(circle);
+
+  circle.addEventListener('mousemove', (ev) => {
+    tooltip.style.display = 'block';
+    tooltip.style.left = (ev.pageX + 12) + 'px';
+    tooltip.style.top = (ev.pageY + 8) + 'px';
+    tooltip.textContent = n.id;
+  });
+  circle.addEventListener('mouseleave', () => tooltip.style.display = 'none');
+
+  if (n.size > 14) {
+    const label = document.createElementNS(svgNS, 'text');
+    label.setAttribute('x', n.x);
+    label.setAttribute('y', n.y - n.size - 6);
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('fill', '#c9d1e3');
+    label.setAttribute('font-size', '10');
+    label.textContent = n.id;
+    g.appendChild(label);
+  }
+  nodeGroup.appendChild(g);
+  circleById[n.id] = circle;
+});
+
+// ---- touch pan & pinch-zoom for the graph (mobile) ----
+(function() {
+  let viewBox = { x: 0, y: 0, w: 1200, h: 750 };
+  function setViewBox() {
+    svg.setAttribute('viewBox', viewBox.x + ' ' + viewBox.y + ' ' + viewBox.w + ' ' + viewBox.h);
+  }
+  let pointers = new Map();
+  let lastDist = null;
+  let lastMid = null;
+
+  function getDist(pts) {
+    const [a, b] = pts;
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+  function getMid(pts) {
+    const [a, b] = pts;
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  }
+
+  svg.addEventListener('pointerdown', (e) => {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  });
+  svg.addEventListener('pointermove', (e) => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const pts = Array.from(pointers.values());
+
+    if (pts.length === 2) {
+      const dist = getDist(pts);
+      const mid = getMid(pts);
+      if (lastDist != null) {
+        const scale = lastDist / dist;
+        const newW = Math.min(2400, Math.max(400, viewBox.w * scale));
+        const newH = newW * (viewBox.h / viewBox.w);
+        viewBox.x += (viewBox.w - newW) * 0.5;
+        viewBox.y += (viewBox.h - newH) * 0.5;
+        viewBox.w = newW; viewBox.h = newH;
+        setViewBox();
+      }
+      lastDist = dist; lastMid = mid;
+    } else if (pts.length === 1 && e.buttons) {
+      const dx = (e.movementX || 0) * (viewBox.w / svg.clientWidth);
+      const dy = (e.movementY || 0) * (viewBox.h / svg.clientHeight);
+      viewBox.x -= dx; viewBox.y -= dy;
+      setViewBox();
+    }
+  });
+  function clearPointer(e) {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) { lastDist = null; lastMid = null; }
+  }
+  svg.addEventListener('pointerup', clearPointer);
+  svg.addEventListener('pointercancel', clearPointer);
+  svg.addEventListener('pointerleave', clearPointer);
+
+  svg.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const scale = e.deltaY > 0 ? 1.08 : 0.92;
+    const newW = Math.min(2400, Math.max(400, viewBox.w * scale));
+    const newH = newW * (viewBox.h / viewBox.w);
+    viewBox.x += (viewBox.w - newW) * 0.5;
+    viewBox.y += (viewBox.h - newH) * 0.5;
+    viewBox.w = newW; viewBox.h = newH;
+    setViewBox();
+  }, { passive: false });
+
+  setViewBox();
+})();
+
+// populate organ dropdown for custom param form
+const organSelect = document.getElementById('newParamOrgan');
+graphData.nodes.filter(n => n.type === 'organ').sort((a,b) => a.id.localeCompare(b.id)).forEach(n => {
+  const opt = document.createElement('option');
+  opt.value = n.id; opt.textContent = n.id;
+  organSelect.appendChild(opt);
+});
+
+// ---- CORE VITALS ----
+const hrSlider = document.getElementById('hrSlider');
+const rrSlider = document.getElementById('rrSlider');
+const stressSlider = document.getElementById('stressSlider');
+const o2Slider = document.getElementById('o2Slider');
+const hrLabel = document.getElementById('hrLabel');
+const rrLabel = document.getElementById('rrLabel');
+const stressLabel = document.getElementById('stressLabel');
+const o2Label = document.getElementById('o2Label');
+const hrValue = document.getElementById('hrValue');
+const rrValue = document.getElementById('rrValue');
+const spo2Value = document.getElementById('spo2Value');
+const bpValue = document.getElementById('bpValue');
+const coValue = document.getElementById('coValue');
+const statusBox = document.getElementById('status');
+
+function updateLabelsAndMetrics() {
+  const hr = parseInt(hrSlider.value);
+  const rr = parseInt(rrSlider.value);
+  const stress = parseInt(stressSlider.value);
+  const o2 = parseInt(o2Slider.value);
+
+  hrLabel.textContent = hr + ' bpm';
+  rrLabel.textContent = rr + ' /min';
+  stressLabel.textContent = stress + '%';
+  o2Label.textContent = o2 + '%';
+
+  hrValue.innerHTML = hr + '<span class="metric-unit">bpm</span>';
+  rrValue.innerHTML = rr + '<span class="metric-unit">/min</span>';
+  spo2Value.innerHTML = o2 + '<span class="metric-unit">%</span>';
+
+  const systolic = Math.round(110 + (hr - 72) * 0.35 + stress * 0.25);
+  const diastolic = Math.round(72 + (hr - 72) * 0.15 + stress * 0.15);
+  bpValue.innerHTML = systolic + '/' + diastolic + '<span class="metric-unit">mmHg</span>';
+
+  const strokeVolume = 70 - stress * 0.15;
+  const cardiacOutput = (hr * strokeVolume / 1000).toFixed(1);
+  coValue.innerHTML = cardiacOutput + '<span class="metric-unit">L/min</span>';
+
+  if (hr > 150 || o2 < 90 || systolic > 150) {
+    statusBox.className = 'status-crit';
+    statusBox.textContent = 'Vitals elevated — simulated stress state';
+  } else if (hr > 100 || o2 < 95 || stress > 60) {
+    statusBox.className = 'status-warn';
+    statusBox.textContent = 'Vitals slightly elevated';
+  } else {
+    statusBox.className = 'status-ok';
+    statusBox.textContent = 'Vitals within normal range';
+  }
+}
+[hrSlider, rrSlider, stressSlider, o2Slider].forEach(s => s.addEventListener('input', updateLabelsAndMetrics));
+updateLabelsAndMetrics();
+
+// ---- CUSTOM PARAMETERS (persisted via window.storage) ----
+let customParams = [];
+const customParamsList = document.getElementById('customParamsList');
+const loadMsg = document.getElementById('loadMsg');
+
+function renderCustomParams() {
+  customParamsList.innerHTML = '';
+  customParams.forEach((p, idx) => {
+    const div = document.createElement('div');
+    div.className = 'custom-param';
+    div.innerHTML = `
+      <button class="del" data-idx="${idx}">×</button>
+      <label style="font-size:12px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:5px;">
+        <span>${p.name} <span style="opacity:.6">(affects ${p.organ})</span></span>
+        <span id="paramLabel-${idx}">${p.value} ${p.unit}</span>
+      </label>
+      <input type="range" min="${p.min}" max="${p.max}" value="${p.value}" data-idx="${idx}" class="customSlider" style="width:100%;accent-color:var(--accent3)">
+    `;
+    customParamsList.appendChild(div);
+  });
+
+  document.querySelectorAll('.customSlider').forEach(el => {
+    el.addEventListener('input', (e) => {
+      const idx = parseInt(e.target.dataset.idx);
+      customParams[idx].value = parseFloat(e.target.value);
+      document.getElementById('paramLabel-' + idx).textContent = customParams[idx].value + ' ' + customParams[idx].unit;
+      saveCustomParams();
+    });
+  });
+  document.querySelectorAll('.del').forEach(el => {
+    el.addEventListener('click', (e) => {
+      const idx = parseInt(e.target.dataset.idx);
+      customParams.splice(idx, 1);
+      renderCustomParams();
+      saveCustomParams();
+    });
+  });
+}
+
+async function saveCustomParams() {
+  try {
+    await window.storage.set('custom-body-parameters', JSON.stringify(customParams), false);
+  } catch (err) {
+    console.error('Save failed', err);
+  }
+}
+
+async function loadCustomParams() {
+  try {
+    const result = await window.storage.get('custom-body-parameters', false);
+    if (result && result.value) {
+      customParams = JSON.parse(result.value);
+    }
+  } catch (err) {
+    customParams = [];
+  }
+  loadMsg.style.display = 'none';
+  renderCustomParams();
+}
+loadCustomParams();
+
+// ---- LIVE NEWS TICKER + MOOD SCORING ----
+const NEGATIVE_WORDS = ['war','crisis','death','dead','killed','attack','disaster','crash','recession','conflict','violence','shooting','collapse','scandal','fraud','outbreak','emergency','threat','tension','protest','fear','disease','flood','wildfire','layoffs','inflation','strike','bankruptcy'];
+const POSITIVE_WORDS = ['win','victory','breakthrough','recovery','growth','success','celebrat','peace','agreement','record high','rescue','cure','launch','award','boost','rally','surge','gains','innovation','historic'];
+
+let latestHeadlines = [];
+
+function scoreHeadlines(headlines) {
+  let neg = 0, pos = 0;
+  headlines.forEach(h => {
+    const lower = h.toLowerCase();
+    NEGATIVE_WORDS.forEach(w => { if (lower.includes(w)) neg++; });
+    POSITIVE_WORDS.forEach(w => { if (lower.includes(w)) pos++; });
+  });
+  const total = neg + pos;
+  if (total === 0) return 30;
+  const negRatio = neg / total;
+  return Math.round(15 + negRatio * 70);
+}
+
+let seenHeadlineKeys = new Set();
+let tickerRenderedItems = [];
+
+function formatTime(dateStr) {
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  } catch (err) {
+    return '';
+  }
+}
+
+const NEWS_FEEDS = [
+  { label: 'IN', url: 'https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en' },
+  { label: 'TE', url: 'https://news.google.com/rss?hl=te-IN&gl=IN&ceid=IN:te' },
+];
+
+async function fetchOneFeed(feed) {
+  const cacheBust = Date.now();
+  const resp = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.url) + '&_=' + cacheBust);
+  const data = await resp.json();
+  if (!data.items) return [];
+  return data.items.map(i => ({ title: i.title, time: formatTime(i.pubDate), label: feed.label }));
+}
+
+function setTickerSpeed() {
+  const ticker = document.getElementById('newsTicker');
+  const pxPerSecond = 70;
+  const distance = ticker.scrollWidth + ticker.parentElement.clientWidth;
+  const duration = Math.max(20, distance / pxPerSecond);
+  ticker.style.animation = 'none';
+  void ticker.offsetHeight;
+  ticker.style.animation = 'ticker ' + duration.toFixed(1) + 's linear infinite';
+}
+
+const MAX_TICKER_ITEMS = 25;
+
+async function fetchNews() {
+  const ticker = document.getElementById('newsTicker');
+  try {
+    const results = await Promise.allSettled(NEWS_FEEDS.map(fetchOneFeed));
+    const allItems = results.filter(r => r.status === 'fulfilled').flatMap(r => r.value);
+
+    if (allItems.length === 0) throw new Error('no items from any feed');
+
+    const fresh = [];
+    allItems.forEach(item => {
+      const key = item.label + '::' + item.title;
+      if (seenHeadlineKeys.has(key)) return;
+      seenHeadlineKeys.add(key);
+      fresh.push(item);
+    });
+
+    function renderItem(h) {
+      return '<span>[' + h.label + '] ' + h.title + (h.time ? ' &middot; ' + h.time : '') + '</span>';
+    }
+
+    if (fresh.length > 0) {
+      latestHeadlines = fresh.map(h => h.title).concat(latestHeadlines).slice(0, MAX_TICKER_ITEMS);
+      const combined = fresh.concat(tickerRenderedItems).slice(0, MAX_TICKER_ITEMS);
+      tickerRenderedItems = combined;
+      ticker.innerHTML = combined.map(renderItem).join('');
+      setTickerSpeed();
+    } else if (!ticker.innerHTML || ticker.innerHTML.includes('Loading') || ticker.innerHTML.includes('Could not load')) {
+      tickerRenderedItems = allItems.slice(0, 16);
+      latestHeadlines = tickerRenderedItems.map(i => i.title);
+      ticker.innerHTML = tickerRenderedItems.map(renderItem).join('');
+      setTickerSpeed();
+    }
+
+    if (seenHeadlineKeys.size > 400) {
+      seenHeadlineKeys = new Set(Array.from(seenHeadlineKeys).slice(-200));
+    }
+    return true;
+  } catch (err) {
+    console.error('News fetch failed', err);
+  }
+  if (!ticker.innerHTML || ticker.innerHTML.includes('Loading')) {
+    ticker.innerHTML = '<span>Could not load live news — check your internet connection.</span>';
+  }
+  return false;
+}
+
+// refresh headlines automatically every 2 minutes, always appending only new items
+setInterval(fetchNews, 2 * 60 * 1000);
+
+// ---- REAL AIR QUALITY -> OXYGEN SLIDER ----
+async function fetchAirQuality() {
+  function withCoords(lat, lon) {
+    return fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon + '&current=us_aqi')
+      .then(r => r.json());
+  }
+  try {
+    const coords = await new Promise((resolve) => {
+      if (!navigator.geolocation) { resolve({ lat: 17.3850, lon: 78.4867 }); return; }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+        () => resolve({ lat: 17.3850, lon: 78.4867 }),
+        { timeout: 4000 }
+      );
+    });
+    const data = await withCoords(coords.lat, coords.lon);
+    const aqi = data.current && data.current.us_aqi != null ? data.current.us_aqi : null;
+    return aqi;
+  } catch (err) {
+    console.error('Air quality fetch failed', err);
+    return null;
+  }
+}
+
+document.getElementById('syncRealWorld').addEventListener('click', async () => {
+  const statusEl = document.getElementById('syncStatus');
+  statusEl.textContent = 'Syncing...';
+
+  const [newsOk, aqi] = await Promise.all([fetchNews(), fetchAirQuality()]);
+
+  let parts = [];
+  if (newsOk) {
+    const mood = scoreHeadlines(latestHeadlines);
+    stressSlider.value = mood;
+    updateLabelsAndMetrics();
+    parts.push('Stress set to ' + mood + '% from news tone');
+  } else {
+    parts.push('news unavailable');
+  }
+
+  if (aqi != null) {
+    const o2 = Math.round(Math.max(80, 100 - (aqi / 300) * 25));
+    o2Slider.value = o2;
+    updateLabelsAndMetrics();
+    parts.push('O2 set to ' + o2 + '% from regional AQI (' + Math.round(aqi) + ')');
+  } else {
+    parts.push('air quality unavailable');
+  }
+
+  statusEl.textContent = parts.join(' · ');
+});
+
+// auto-load the news ticker on page load (doesn't touch sliders until user clicks Sync)
+fetchNews();
+
+
+// add-parameter form
+const toggleAddForm = document.getElementById('toggleAddForm');
+const addForm = document.getElementById('addForm');
+toggleAddForm.addEventListener('click', () => addForm.classList.toggle('open'));
+
+document.getElementById('saveNewParam').addEventListener('click', async () => {
+  const name = document.getElementById('newParamName').value.trim();
+  const unit = document.getElementById('newParamUnit').value.trim();
+  const def = parseFloat(document.getElementById('newParamDefault').value);
+  const min = parseFloat(document.getElementById('newParamMin').value);
+  const max = parseFloat(document.getElementById('newParamMax').value);
+  const healthyMin = parseFloat(document.getElementById('newParamHealthyMin').value);
+  const healthyMax = parseFloat(document.getElementById('newParamHealthyMax').value);
+  const organ = organSelect.value;
+
+  if (!name || isNaN(def) || isNaN(min) || isNaN(max)) {
+    alert('Please fill in at least name, default, min, and max.');
+    return;
+  }
+
+  customParams.push({ name, unit, value: def, min, max, healthyMin, healthyMax, organ });
+  await saveCustomParams();
+  renderCustomParams();
+  addForm.classList.remove('open');
+  ['newParamName','newParamUnit','newParamDefault','newParamMin','newParamMax','newParamHealthyMin','newParamHealthyMax'].forEach(id => document.getElementById(id).value = '');
+});
+
+// ---- ANIMATION LOOP ----
+let t = 0;
+function animate() {
+  t += 1 / 60;
+  const hr = parseInt(hrSlider.value);
+  const rr = parseInt(rrSlider.value);
+  const stress = parseInt(stressSlider.value);
+  const o2 = parseInt(o2Slider.value);
+
+  const heartFreq = hr / 60;
+  const breathFreq = rr / 60;
+
+  const heartPhase = (t * heartFreq) % 1;
+  const heartPulse = Math.pow(Math.max(0, Math.sin(heartPhase * Math.PI)), 3);
+  if (circleById['Heart']) {
+    const base = nodeById['Heart'].size;
+    circleById['Heart'].setAttribute('r', base + heartPulse * (6 + stress * 0.05));
+    circleById['Heart'].setAttribute('opacity', 0.75 + heartPulse * 0.25);
+  }
+
+  const breathPhase = Math.sin(t * breathFreq * 2 * Math.PI);
+  if (circleById['Lungs']) {
+    const base = nodeById['Lungs'].size;
+    circleById['Lungs'].setAttribute('r', base + breathPhase * 5);
+  }
+  if (circleById['Diaphragm']) {
+    const base = nodeById['Diaphragm'].size;
+    circleById['Diaphragm'].setAttribute('r', base + breathPhase * 3);
+  }
+
+  if (circleById['Brain']) {
+    const flicker = 0.7 + 0.3 * Math.sin(t * 3);
+    const glow = Math.min(1, 0.5 + stress / 150) * flicker;
+    circleById['Brain'].setAttribute('opacity', glow);
+  }
+
+  pulseLines.forEach((line, i) => {
+    const wavePhase = (t * heartFreq - i * 0.05) % 1;
+    const visible = wavePhase < 0.3 ? (1 - wavePhase / 0.3) : 0;
+    line.setAttribute('opacity', visible * 0.8);
+  });
+
+  const o2Factor = Math.max(0, (100 - o2) / 30);
+  ['Lungs', 'Brain'].forEach(id => {
+    if (circleById[id]) {
+      circleById[id].setAttribute('fill', o2Factor > 0.1 ? '#c94f5d' : (typeColor[nodeById[id].type] || '#7bd389'));
+    }
+  });
+
+  // custom parameters affect their organ's brightness/color if out of healthy range
+  customParams.forEach(p => {
+    const circ = circleById[p.organ];
+    if (!circ) return;
+    const outOfRange = (p.value < p.healthyMin || p.value > p.healthyMax);
+    if (outOfRange) {
+      circ.setAttribute('fill', '#f2b84f');
+      circ.setAttribute('opacity', 0.6 + 0.2 * Math.sin(t * 4));
+    } else if (!['Heart','Lungs','Brain'].includes(p.organ)) {
+      circ.setAttribute('fill', typeColor[nodeById[p.organ].type] || '#7bd389');
+      circ.setAttribute('opacity', 1);
+    }
+  });
+
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+</body>
+</html>
