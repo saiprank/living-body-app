@@ -430,7 +430,7 @@ function renderCustomParams() {
 
 async function saveCustomParams() {
   try {
-    await window.storage.set('custom-body-parameters', JSON.stringify(customParams), false);
+    localStorage.setItem('custom-body-parameters', JSON.stringify(customParams));
   } catch (err) {
     console.error('Save failed', err);
   }
@@ -438,9 +438,9 @@ async function saveCustomParams() {
 
 async function loadCustomParams() {
   try {
-    const result = await window.storage.get('custom-body-parameters', false);
-    if (result && result.value) {
-      customParams = JSON.parse(result.value);
+    const raw = localStorage.getItem('custom-body-parameters');
+    if (raw) {
+      customParams = JSON.parse(raw);
     }
   } catch (err) {
     customParams = [];
