@@ -98,6 +98,70 @@
   .flight-links a { font-size:11px; color:#0d1119; background:var(--accent2); padding:6px 10px; border-radius:6px; text-decoration:none; font-weight:600; }
   .flight-links a.alt { background:transparent; border:1px solid var(--border); color:var(--text); }
   .flights-note { font-size:10px; color:var(--muted); margin-top:10px; line-height:1.4; }
+
+  #exploreBar { flex-shrink:0; background:#141925; border-top:1px solid var(--border); }
+  #exploreHeader { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; cursor:pointer; user-select:none; }
+  #exploreHeader .title { font-size:13px; font-weight:600; }
+  #exploreHeader .chevron { font-size:11px; color:var(--muted); transition: transform 0.2s; }
+  #exploreHeader.open .chevron { transform: rotate(180deg); }
+  #exploreContent { max-height:0; overflow:hidden; transition: max-height 0.25s ease; }
+  #exploreContent.open { max-height:420px; }
+  #exploreTabs { display:flex; gap:6px; padding:0 16px 10px; flex-wrap:wrap; }
+  .explore-tab-btn { background:transparent; border:1px solid var(--border); color:var(--muted); font-size:11px; font-weight:600; padding:6px 12px; border-radius:6px; cursor:pointer; }
+  .explore-tab-btn.active { background:var(--accent2); color:#0d1119; border-color:var(--accent2); }
+  .explore-panel { display:none; padding:0 16px 16px; max-height:340px; overflow-y:auto; }
+  .explore-panel.active { display:block; }
+  .explore-filters { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .explore-filters select, .explore-filters input, .explore-filters button { font-size:11px; padding:6px 10px; background:#0d1119; border:1px solid var(--border); color:var(--text); border-radius:6px; }
+  .explore-filters button { cursor:pointer; font-weight:600; }
+  .reddit-post { background:#0d1119; border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+  .reddit-post .rp-title { font-size:12px; font-weight:600; color:var(--text); text-decoration:none; display:block; margin-bottom:4px; }
+  .reddit-post .rp-title:hover { text-decoration:underline; }
+  .reddit-post .rp-meta { font-size:10px; color:var(--muted); }
+  .geo-card { background:#0d1119; border:1px solid var(--border); border-radius:8px; padding:12px 14px; }
+  .geo-card-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .geo-card-header img { width:36px; border-radius:3px; }
+  .geo-card-header .geo-name { font-size:14px; font-weight:600; }
+  .geo-card-header .geo-official { font-size:10px; color:var(--muted); }
+  .geo-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; font-size:11px; }
+  .geo-grid .geo-label { color:var(--muted); }
+  .geo-grid .geo-value { font-weight:600; text-align:right; }
+  .space-card { background:#0d1119; border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:10px; }
+  .space-card img { width:100%; border-radius:6px; margin-bottom:8px; }
+  .space-card .sc-title { font-size:12px; font-weight:600; margin-bottom:4px; }
+  .space-card .sc-text { font-size:11px; color:var(--muted); line-height:1.5; }
+  .iss-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; font-size:11px; }
+  .iss-grid .iss-label { color:var(--muted); }
+  .iss-grid .iss-value { font-weight:600; text-align:right; }
+
+  #magicOverlay { position:fixed; inset:0; pointer-events:none; z-index:9999; opacity:0; }
+  #magicOverlay.flash { animation: magicFlash 1.8s ease-out; }
+  #magicFlashLayer { position:absolute; inset:0; background:#fff; opacity:0; }
+  #magicOverlay.flash #magicFlashLayer { animation: flashPulse 1.8s ease-out; }
+  #magicBolt { position:absolute; top:0; left:50%; transform:translateX(-50%); opacity:0; }
+  #magicOverlay.flash #magicBolt { animation: boltFlicker 1.8s ease-out; }
+  #magicText { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); font-size:28px; font-weight:700; color:#fff; text-shadow:0 0 20px #ffe98a, 0 0 40px #ffcc33; opacity:0; white-space:nowrap; }
+  #magicOverlay.flash #magicText { animation: textPop 1.8s ease-out; }
+  @keyframes magicFlash { 0% { opacity:1; } 100% { opacity:0; } }
+  @keyframes flashPulse {
+    0% { opacity:0; } 4% { opacity:0.9; } 8% { opacity:0.1; } 12% { opacity:0.7; }
+    16% { opacity:0; } 40% { opacity:0; } 45% { opacity:0.4; } 50% { opacity:0; } 100% { opacity:0; }
+  }
+  @keyframes boltFlicker {
+    0% { opacity:0; } 5% { opacity:1; } 9% { opacity:0; } 11% { opacity:1; }
+    15% { opacity:0; } 100% { opacity:0; }
+  }
+  @keyframes textPop {
+    0% { opacity:0; transform:translate(-50%,-40%) scale(0.7); }
+    15% { opacity:1; transform:translate(-50%,-50%) scale(1.05); }
+    25% { transform:translate(-50%,-50%) scale(1); }
+    80% { opacity:1; } 100% { opacity:0; transform:translate(-50%,-50%) scale(1); }
+  }
+  @keyframes shakeScreen {
+    0%, 100% { transform:translate(0,0); } 20% { transform:translate(-3px,2px); }
+    40% { transform:translate(3px,-2px); } 60% { transform:translate(-2px,-3px); } 80% { transform:translate(2px,3px); }
+  }
+  body.shaking { animation: shakeScreen 0.4s ease-in-out 0s 3; }
   #goldBox { background:#141925; border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
   #goldBox .title { font-size:12px; font-weight:600; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
   #goldBox .updated { font-size:10px; color:var(--muted); font-weight:400; }
@@ -113,11 +177,29 @@
   .metal-name { font-size:11px; font-weight:600; }
   .metal-price { font-size:12px; color:var(--muted); margin-top:1px; }
   .metal-spark { flex:1; height:36px; }
+
+  .more-market-row { display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-top:1px solid var(--border); }
+  .more-market-row:first-child { border-top:none; }
+  .more-market-row .mm-name { font-size:11px; color:var(--muted); }
+  .more-market-row .mm-value { font-size:13px; font-weight:600; text-align:right; }
+  .more-market-row .mm-change { font-size:10px; text-align:right; display:block; }
+  .more-market-row .mm-change.up { color:#7bd389; }
+  .more-market-row .mm-change.down { color:#ff5d7a; }
   #newsBanner { background:#0d1119; border-bottom:1px solid var(--border); padding:8px 0; overflow:hidden; white-space:nowrap; position:relative; flex-shrink:0; }
   #newsBanner .tickerLabel { position:absolute; left:0; top:0; bottom:0; background:var(--accent); color:#0d1119; font-size:10px; font-weight:700; padding:8px 10px; display:flex; align-items:center; letter-spacing:.5px; z-index:2; }
   #newsTicker { display:inline-block; padding-left:100%; animation: ticker 45s linear infinite; animation-play-state: running; font-size:12px; color:var(--muted); padding-left:calc(100% + 90px); will-change: transform; }
   #newsTicker span { margin-right:40px; color: var(--text); }
   @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+
+  #sensexBanner { background:#0e1712; border-bottom:1px solid var(--border); padding:8px 16px; flex-shrink:0; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  #sensexBanner .tickerLabel { background:#f2c14e; color:#171310; font-size:10px; font-weight:700; padding:4px 10px; border-radius:5px; letter-spacing:.5px; flex-shrink:0; }
+  .index-stat { display:flex; align-items:baseline; gap:6px; font-size:12px; }
+  .index-stat .idx-name { color:var(--muted); font-weight:600; }
+  .index-stat .idx-value { font-size:14px; font-weight:700; color:var(--text); }
+  .index-stat .idx-change.up { color:#7bd389; }
+  .index-stat .idx-change.down { color:#ff5d7a; }
+  #sensexUpdated { font-size:10px; color:var(--muted); margin-left:auto; }
+
   #realWorldBox { background:#141925; border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
   #realWorldBox .note { font-size:10px; color:var(--muted); margin-top:6px; line-height:1.4; }
   #syncStatus { font-size:11px; color:var(--muted); margin-top:6px; text-align:center; }
@@ -127,6 +209,20 @@
 <div id="newsBanner">
   <div class="tickerLabel">LIVE NEWS</div>
   <div id="newsTicker"><span>Loading latest headlines...</span></div>
+</div>
+<div id="sensexBanner">
+  <div class="tickerLabel">INDIAN MARKETS</div>
+  <div class="index-stat">
+    <span class="idx-name">SENSEX</span>
+    <span class="idx-value" id="sensexValue">--</span>
+    <span class="idx-change" id="sensexChange">--</span>
+  </div>
+  <div class="index-stat">
+    <span class="idx-name">NIFTY 50</span>
+    <span class="idx-value" id="niftyValue">--</span>
+    <span class="idx-change" id="niftyChange">--</span>
+  </div>
+  <div id="sensexUpdated">loading...</div>
 </div>
 <div id="layout">
   <div id="leftPanel">
@@ -289,6 +385,87 @@
     </div>
     <div class="flights-note">There's no free, no-signup API that provides genuinely live flight prices — real-time fares require a registered developer key (Amadeus, Skyscanner, or Kiwi all require free account signup). These buttons open the actual live search results directly on Google Flights / Skyscanner in a new tab, so the prices and discounts you see there are real and current. If you get a free Amadeus API key, this panel can be upgraded to show fares inline.</div>
   </div>
+</div>
+
+<div id="exploreBar">
+  <div id="exploreHeader" onclick="document.getElementById('exploreHeader').classList.toggle('open'); document.getElementById('exploreContent').classList.toggle('open'); if (!exploreLoaded.reddit) { exploreLoaded.reddit = true; fetchReddit(); }">
+    <span class="title">🧭 Explore — Reddit, Geography, Space &amp; Markets</span>
+    <span class="chevron">▲</span>
+  </div>
+  <div id="exploreContent">
+    <div id="exploreTabs">
+      <button class="explore-tab-btn active" data-tab="reddit">Reddit</button>
+      <button class="explore-tab-btn" data-tab="geo">Geography</button>
+      <button class="explore-tab-btn" data-tab="space">Space</button>
+      <button class="explore-tab-btn" data-tab="markets">Markets</button>
+    </div>
+
+    <div class="explore-panel active" id="panel-reddit">
+      <div class="explore-filters">
+        <select id="redditSub">
+          <option value="worldnews">r/worldnews</option>
+          <option value="technology">r/technology</option>
+          <option value="india">r/india</option>
+          <option value="science">r/science</option>
+          <option value="space">r/space</option>
+        </select>
+        <select id="redditSort">
+          <option value="hot">Hot</option>
+          <option value="new">New</option>
+          <option value="top">Top</option>
+          <option value="rising">Rising</option>
+        </select>
+        <button id="redditRefresh">Refresh</button>
+      </div>
+      <div id="redditList">Loading posts...</div>
+    </div>
+
+    <div class="explore-panel" id="panel-geo">
+      <div class="explore-filters">
+        <input type="text" id="geoSearch" placeholder="Country name (e.g. India)" style="flex:1; min-width:160px;">
+        <button id="geoSearchBtn">Search</button>
+      </div>
+      <div id="geoResult">Loading India...</div>
+    </div>
+
+    <div class="explore-panel" id="panel-space">
+      <div class="explore-filters">
+        <label style="font-size:11px; color:var(--muted); display:flex; align-items:center; gap:6px;">
+          APOD date: <input type="date" id="apodDate">
+        </label>
+        <button id="apodRefresh">Load</button>
+      </div>
+      <div id="issCard" class="space-card">Loading ISS position...</div>
+      <div id="apodCard" class="space-card">Loading astronomy picture of the day...</div>
+    </div>
+
+    <div class="explore-panel" id="panel-markets">
+      <div class="more-market-row">
+        <span class="mm-name">Bitcoin</span>
+        <span><span class="mm-value" id="btcValue">--</span><span class="mm-change" id="btcChange"></span></span>
+      </div>
+      <div class="more-market-row">
+        <span class="mm-name">USD / INR</span>
+        <span><span class="mm-value" id="usdinrValue">--</span><span class="mm-change" id="usdinrChange"></span></span>
+      </div>
+      <div class="more-market-row">
+        <span class="mm-name">Nifty Bank</span>
+        <span><span class="mm-value" id="niftybankValue">--</span><span class="mm-change" id="niftybankChange"></span></span>
+      </div>
+      <div class="more-market-row">
+        <span class="mm-name">Crude oil (WTI)</span>
+        <span><span class="mm-value" id="crudeValue">--</span><span class="mm-change" id="crudeChange"></span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="magicOverlay">
+  <div id="magicFlashLayer"></div>
+  <svg id="magicBolt" width="300" height="500" viewBox="0 0 300 500">
+    <polygon points="160,0 90,260 150,260 110,500 230,190 160,190 210,0" fill="#fff6c9" opacity="0.95"/>
+  </svg>
+  <div id="magicText"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
@@ -672,6 +849,311 @@ async function fetchNews() {
 
 // refresh headlines automatically every 2 minutes, always appending only new items
 setInterval(fetchNews, 2 * 60 * 1000);
+
+// ---- INDIAN MARKETS: SENSEX + NIFTY 50 (live, via Yahoo Finance) ----
+// Yahoo Finance doesn't set CORS headers for browser fetches, so this routes
+// through the same public CORS relay used for metal prices.
+const INDEX_SYMBOLS = { sensex: '%5EBSESN', nifty: '%5ENSEI' };
+const INDEX_CORS_RELAY = 'https://api.allorigins.win/raw?url=';
+
+async function fetchIndex(key) {
+  try {
+    const symbol = INDEX_SYMBOLS[key];
+    const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + symbol + '?range=1d&interval=1m';
+    const resp = await fetch(INDEX_CORS_RELAY + encodeURIComponent(url));
+    const data = await resp.json();
+    const result = data.chart && data.chart.result && data.chart.result[0];
+    if (!result || !result.meta) return null;
+    return {
+      price: result.meta.regularMarketPrice,
+      prevClose: result.meta.chartPreviousClose,
+    };
+  } catch (err) {
+    console.error('Index fetch failed for ' + key, err);
+    return null;
+  }
+}
+
+function renderIndex(key, data) {
+  const valueEl = document.getElementById(key + 'Value');
+  const changeEl = document.getElementById(key + 'Change');
+  if (!data || data.price == null) {
+    valueEl.textContent = 'unavailable';
+    changeEl.textContent = '';
+    return;
+  }
+  const change = data.price - data.prevClose;
+  const pct = (change / data.prevClose) * 100;
+  const up = change >= 0;
+  valueEl.textContent = data.price.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+  changeEl.textContent = (up ? '▲ +' : '▼ ') + change.toFixed(2) + ' (' + pct.toFixed(2) + '%)';
+  changeEl.className = 'idx-change ' + (up ? 'up' : 'down');
+}
+
+async function fetchIndices() {
+  const [sensex, nifty] = await Promise.all([fetchIndex('sensex'), fetchIndex('nifty')]);
+  renderIndex('sensex', sensex);
+  renderIndex('nifty', nifty);
+  document.getElementById('sensexUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+}
+
+fetchIndices();
+setInterval(fetchIndices, 60 * 1000);
+
+// ---- MORE MARKETS: Bitcoin, USD/INR, Nifty Bank, Crude Oil (live, via Yahoo Finance) ----
+const MORE_MARKETS = [
+  { id: 'btc',       symbol: 'BTC-USD',  format: v => '$' + v.toLocaleString('en-US', { maximumFractionDigits: 0 }) },
+  { id: 'usdinr',    symbol: 'INR=X',    format: v => '₹' + v.toFixed(2) },
+  { id: 'niftybank', symbol: '%5ENSEBANK', format: v => v.toLocaleString('en-IN', { maximumFractionDigits: 2 }) },
+  { id: 'crude',     symbol: 'CL=F',     format: v => '$' + v.toFixed(2) },
+];
+
+async function fetchMoreMarket(item) {
+  try {
+    const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + item.symbol + '?range=1d&interval=1m';
+    const resp = await fetch(INDEX_CORS_RELAY + encodeURIComponent(url));
+    const data = await resp.json();
+    const result = data.chart && data.chart.result && data.chart.result[0];
+    if (!result || !result.meta) return null;
+    return { price: result.meta.regularMarketPrice, prevClose: result.meta.chartPreviousClose };
+  } catch (err) {
+    console.error('More-markets fetch failed for ' + item.id, err);
+    return null;
+  }
+}
+
+function renderMoreMarket(item, data) {
+  const valueEl = document.getElementById(item.id + 'Value');
+  const changeEl = document.getElementById(item.id + 'Change');
+  if (!data || data.price == null) {
+    valueEl.textContent = 'unavailable';
+    changeEl.textContent = '';
+    return;
+  }
+  const change = data.price - data.prevClose;
+  const pct = data.prevClose ? (change / data.prevClose) * 100 : 0;
+  const up = change >= 0;
+  valueEl.textContent = item.format(data.price);
+  changeEl.textContent = (up ? '▲' : '▼') + ' ' + pct.toFixed(2) + '%';
+  changeEl.className = 'mm-change ' + (up ? 'up' : 'down');
+}
+
+async function fetchMoreMarkets() {
+  const results = await Promise.all(MORE_MARKETS.map(fetchMoreMarket));
+  MORE_MARKETS.forEach((item, i) => renderMoreMarket(item, results[i]));
+}
+
+fetchMoreMarkets();
+setInterval(fetchMoreMarkets, 60 * 1000);
+
+// ---- EXPLORE PANEL: tab switching ----
+const exploreLoaded = { reddit: false, geo: false, space: false };
+
+document.querySelectorAll('.explore-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.explore-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.explore-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    document.getElementById('panel-' + tab).classList.add('active');
+    if (tab === 'reddit' && !exploreLoaded.reddit) { exploreLoaded.reddit = true; fetchReddit(); }
+    if (tab === 'geo' && !exploreLoaded.geo) { exploreLoaded.geo = true; fetchGeo('India'); }
+    if (tab === 'space' && !exploreLoaded.space) { exploreLoaded.space = true; fetchISS(); fetchApod(); }
+  });
+});
+
+// generic fetch helper: try direct fetch first (many public APIs allow CORS),
+// fall back to a public CORS relay only if the direct request fails.
+async function fetchJsonSmart(url) {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('bad status ' + r.status);
+    return await r.json();
+  } catch (err) {
+    const r2 = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+    return await r2.json();
+  }
+}
+
+// ---- REDDIT ----
+function timeAgo(unixSeconds) {
+  const diffMin = Math.floor((Date.now() / 1000 - unixSeconds) / 60);
+  if (diffMin < 60) return diffMin + 'm ago';
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return diffHr + 'h ago';
+  return Math.floor(diffHr / 24) + 'd ago';
+}
+
+async function fetchReddit() {
+  const sub = document.getElementById('redditSub').value;
+  const sort = document.getElementById('redditSort').value;
+  const listEl = document.getElementById('redditList');
+  listEl.textContent = 'Loading posts...';
+  try {
+    const data = await fetchJsonSmart('https://www.reddit.com/r/' + sub + '/' + sort + '.json?limit=12');
+    const posts = (data.data && data.data.children) || [];
+    if (posts.length === 0) throw new Error('no posts');
+    listEl.innerHTML = posts.map(p => {
+      const d = p.data;
+      return '<div class="reddit-post">' +
+        '<a class="rp-title" href="https://reddit.com' + d.permalink + '" target="_blank" rel="noopener">' + d.title + '</a>' +
+        '<div class="rp-meta">▲ ' + d.ups.toLocaleString() + ' &middot; 💬 ' + d.num_comments.toLocaleString() +
+        ' &middot; u/' + d.author + ' &middot; ' + timeAgo(d.created_utc) +
+        (d.over_18 ? ' &middot; NSFW' : '') + '</div></div>';
+    }).join('');
+  } catch (err) {
+    console.error('Reddit fetch failed', err);
+    listEl.textContent = 'Could not load Reddit posts right now.';
+  }
+}
+document.getElementById('redditRefresh').addEventListener('click', fetchReddit);
+document.getElementById('redditSub').addEventListener('change', fetchReddit);
+document.getElementById('redditSort').addEventListener('change', fetchReddit);
+
+// ---- GEOGRAPHY (REST Countries) ----
+async function fetchGeo(query) {
+  const resultEl = document.getElementById('geoResult');
+  resultEl.textContent = 'Searching...';
+  try {
+    const data = await fetchJsonSmart('https://restcountries.com/v3.1/name/' + encodeURIComponent(query));
+    const c = Array.isArray(data) ? data[0] : data;
+    if (!c) throw new Error('no country found');
+
+    const currencies = c.currencies ? Object.values(c.currencies).map(cur => cur.name + ' (' + (cur.symbol || '') + ')').join(', ') : '—';
+    const languages = c.languages ? Object.values(c.languages).join(', ') : '—';
+    const borders = c.borders && c.borders.length ? c.borders.join(', ') : 'None (island/isolated)';
+    const capital = c.capital ? c.capital.join(', ') : '—';
+    const timezones = c.timezones ? c.timezones.join(', ') : '—';
+    const idd = c.idd && c.idd.root ? c.idd.root + (c.idd.suffixes ? c.idd.suffixes[0] : '') : '—';
+
+    resultEl.innerHTML = '<div class="geo-card">' +
+      '<div class="geo-card-header"><img src="' + (c.flags ? c.flags.png : '') + '" alt="flag">' +
+      '<div><div class="geo-name">' + c.name.common + '</div><div class="geo-official">' + c.name.official + '</div></div></div>' +
+      '<div class="geo-grid">' +
+      '<span class="geo-label">Capital</span><span class="geo-value">' + capital + '</span>' +
+      '<span class="geo-label">Region</span><span class="geo-value">' + c.region + (c.subregion ? ' / ' + c.subregion : '') + '</span>' +
+      '<span class="geo-label">Population</span><span class="geo-value">' + c.population.toLocaleString() + '</span>' +
+      '<span class="geo-label">Area</span><span class="geo-value">' + c.area.toLocaleString() + ' km²</span>' +
+      '<span class="geo-label">Languages</span><span class="geo-value">' + languages + '</span>' +
+      '<span class="geo-label">Currencies</span><span class="geo-value">' + currencies + '</span>' +
+      '<span class="geo-label">Calling code</span><span class="geo-value">' + idd + '</span>' +
+      '<span class="geo-label">Driving side</span><span class="geo-value">' + (c.car ? c.car.side : '—') + '</span>' +
+      '<span class="geo-label">Timezones</span><span class="geo-value">' + timezones + '</span>' +
+      '<span class="geo-label">UN member</span><span class="geo-value">' + (c.unMember ? 'Yes' : 'No') + '</span>' +
+      '<span class="geo-label">Borders with</span><span class="geo-value">' + borders + '</span>' +
+      '<span class="geo-label">Coordinates</span><span class="geo-value">' + (c.latlng ? c.latlng.join(', ') : '—') + '</span>' +
+      '</div></div>';
+  } catch (err) {
+    console.error('Geo fetch failed', err);
+    resultEl.textContent = 'Could not find that country — check the spelling and try again.';
+  }
+}
+document.getElementById('geoSearchBtn').addEventListener('click', () => {
+  const q = document.getElementById('geoSearch').value.trim();
+  if (q) fetchGeo(q);
+});
+document.getElementById('geoSearch').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { const q = e.target.value.trim(); if (q) fetchGeo(q); }
+});
+
+// ---- SPACE: ISS live position + NASA Astronomy Picture of the Day ----
+async function fetchISS() {
+  const el = document.getElementById('issCard');
+  try {
+    const data = await fetchJsonSmart('https://api.wheretheiss.at/v1/satellites/25544');
+    el.innerHTML = '<div class="sc-title">🛰️ International Space Station — live position</div>' +
+      '<div class="iss-grid">' +
+      '<span class="iss-label">Latitude</span><span class="iss-value">' + data.latitude.toFixed(2) + '°</span>' +
+      '<span class="iss-label">Longitude</span><span class="iss-value">' + data.longitude.toFixed(2) + '°</span>' +
+      '<span class="iss-label">Altitude</span><span class="iss-value">' + data.altitude.toFixed(1) + ' km</span>' +
+      '<span class="iss-label">Velocity</span><span class="iss-value">' + data.velocity.toFixed(0) + ' km/h</span>' +
+      '<span class="iss-label">Visibility</span><span class="iss-value">' + data.visibility + '</span>' +
+      '<span class="iss-label">Footprint</span><span class="iss-value">' + data.footprint.toFixed(0) + ' km</span>' +
+      '<span class="iss-label">Solar latitude</span><span class="iss-value">' + data.solar_lat.toFixed(2) + '°</span>' +
+      '<span class="iss-label">Solar longitude</span><span class="iss-value">' + data.solar_lon.toFixed(2) + '°</span>' +
+      '</div>';
+  } catch (err) {
+    console.error('ISS fetch failed', err);
+    el.textContent = 'Could not load ISS position right now.';
+  }
+}
+
+async function fetchApod() {
+  const el = document.getElementById('apodCard');
+  const dateInput = document.getElementById('apodDate').value;
+  el.textContent = 'Loading astronomy picture...';
+  try {
+    let url = 'https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY';
+    if (dateInput) url += '&date=' + dateInput;
+    const data = await fetchJsonSmart(url);
+    const media = data.media_type === 'video'
+      ? '<a href="' + data.url + '" target="_blank" rel="noopener">Watch video (opens in new tab)</a>'
+      : '<img src="' + data.url + '" alt="' + data.title + '">';
+    el.innerHTML = '<div class="sc-title">🔭 NASA Astronomy Picture of the Day — ' + data.date + '</div>' +
+      media +
+      '<div class="sc-text" style="margin-top:8px;"><strong>' + data.title + '</strong><br>' + data.explanation +
+      (data.copyright ? '<br><em>© ' + data.copyright + '</em>' : '') + '</div>';
+  } catch (err) {
+    console.error('APOD fetch failed', err);
+    el.textContent = 'Could not load NASA picture of the day right now.';
+  }
+}
+document.getElementById('apodRefresh').addEventListener('click', fetchApod);
+
+// refresh ISS position periodically while the tab has been opened at least once
+setInterval(() => { if (exploreLoaded.space) fetchISS(); }, 15 * 1000);
+
+// ---- MAGIC TIME EFFECT ----
+// Triggers a strong lightning/flash effect at fun repeating times: 11:11, 22:22, 12:34,
+// plus any "palindrome" time (hour reversed equals minute, e.g. 12:21, 13:31, 23:32).
+const MAGIC_TIMES = new Set(['11:11', '22:22', '12:34', '01:23']);
+let lastMagicMinute = null;
+
+function isPalindromeTime(hh, mm) {
+  const reversed = mm.split('').reverse().join('');
+  return hh === reversed;
+}
+
+function checkMagicTime() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const key = hh + ':' + mm;
+  if (key === lastMagicMinute) return;
+
+  if (MAGIC_TIMES.has(key) || isPalindromeTime(hh, mm)) {
+    lastMagicMinute = key;
+    triggerMagicEffect(key);
+  }
+}
+
+function triggerMagicEffect(key) {
+  const overlay = document.getElementById('magicOverlay');
+  const bolt = document.getElementById('magicBolt');
+  const text = document.getElementById('magicText');
+  const messages = {
+    '11:11': '✨ 11:11 — make a wish ✨',
+    '22:22': '⚡ 22:22 — the sky remembers ⚡',
+    '12:34': '🌟 12:34 — in perfect order 🌟',
+  };
+  text.textContent = messages[key] || ('⚡ ' + key + ' — a magic moment ⚡');
+  bolt.style.left = (30 + Math.random() * 40) + '%';
+
+  overlay.classList.remove('flash');
+  void overlay.offsetWidth;
+  overlay.classList.add('flash');
+  document.body.classList.remove('shaking');
+  void document.body.offsetWidth;
+  document.body.classList.add('shaking');
+
+  setTimeout(() => { overlay.classList.remove('flash'); document.body.classList.remove('shaking'); }, 1900);
+}
+
+setInterval(checkMagicTime, 1000);
+checkMagicTime();
+
+
+
 
 // ---- LIVE GOLD / SILVER / PLATINUM PRICES + TRENDS ----
 // Primary source: Yahoo Finance (real COMEX/NYMEX futures data, same feed used by brokerages).
