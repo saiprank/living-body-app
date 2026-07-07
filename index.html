@@ -16,16 +16,25 @@
   #canvasWrap { flex: 1; position: relative; min-height: 0; }
   svg { width: 100%; height: 100%; display:block; touch-action: pan-x pan-y; }
   #panel { width: 340px; background: var(--panel); border-left: 1px solid var(--border); padding: 16px; overflow-y:auto; -webkit-overflow-scrolling: touch; }
+  #leftPanel { width: 300px; background: var(--panel); border-right: 1px solid var(--border); padding: 16px; overflow-y:auto; -webkit-overflow-scrolling: touch; }
+  .updated-row { font-size: 10px; color: var(--muted); margin-top: 8px; }
+  .updated-row span { color: var(--accent3); font-weight: 600; }
+
+  @media (max-width: 1100px) {
+    #leftPanel { width: 240px; padding: 12px; }
+  }
 
   @media (max-width: 900px) {
     #panel { width: 280px; padding: 12px; }
+    #leftPanel { width: 220px; padding: 10px; }
     .metric-value { font-size: 19px; }
   }
 
   @media (max-width: 640px) {
     #layout { flex-direction: column; height: auto; min-height: 100vh; min-height: 100dvh; overflow-y: auto; }
-    #canvasWrap { flex: none; height: 46vh; height: 46dvh; width: 100%; }
-    #panel { width: 100%; max-height: none; border-left: none; border-top: 1px solid var(--border); padding: 14px; padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+    #canvasWrap { flex: none; height: 40vh; height: 40dvh; width: 100%; order: 2; }
+    #leftPanel { width: 100%; max-height: none; border-right: none; border-bottom: 1px solid var(--border); padding: 14px; order: 1; }
+    #panel { width: 100%; max-height: none; border-left: none; border-top: 1px solid var(--border); padding: 14px; padding-bottom: max(24px, env(safe-area-inset-bottom)); order: 3; }
     .row { flex-wrap: wrap; }
     .row .metric-card { min-width: 45%; }
     input[type=range] { height: 28px; }
@@ -66,6 +75,21 @@
   .field-row { display:flex; gap:8px; }
   .field-row > div { flex:1; }
   #loadMsg { font-size:11px; color:var(--muted); text-align:center; padding:6px; }
+  #goldBox { background:#141925; border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
+  #goldBox .title { font-size:12px; font-weight:600; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+  #goldBox .updated { font-size:10px; color:var(--muted); font-weight:400; }
+  .gold-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .gold-card { background:#0d1119; border:1px solid var(--border); border-radius:8px; padding:8px 10px; }
+  .gold-card .region { font-size:10px; color:var(--muted); text-transform:uppercase; }
+  .gold-card .price { font-size:14px; font-weight:600; margin-top:2px; color:#f2c14e; }
+  .gold-card .unit { font-size:9px; color:var(--muted); font-weight:400; }
+  #metalTrends { background:#141925; border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
+  .metal-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .metal-row:last-child { margin-bottom:0; }
+  .metal-info { width:88px; flex-shrink:0; }
+  .metal-name { font-size:11px; font-weight:600; }
+  .metal-price { font-size:12px; color:var(--muted); margin-top:1px; }
+  .metal-spark { flex:1; height:36px; }
   #newsBanner { background:#0d1119; border-bottom:1px solid var(--border); padding:8px 0; overflow:hidden; white-space:nowrap; position:relative; flex-shrink:0; }
   #newsBanner .tickerLabel { position:absolute; left:0; top:0; bottom:0; background:var(--accent); color:#0d1119; font-size:10px; font-weight:700; padding:8px 10px; display:flex; align-items:center; letter-spacing:.5px; z-index:2; }
   #newsTicker { display:inline-block; padding-left:100%; animation: ticker 45s linear infinite; animation-play-state: running; font-size:12px; color:var(--muted); padding-left:calc(100% + 90px); will-change: transform; }
@@ -82,6 +106,41 @@
   <div id="newsTicker"><span>Loading latest headlines...</span></div>
 </div>
 <div id="layout">
+  <div id="leftPanel">
+    <h2>Markets</h2>
+    <div class="sub">Live gold, silver, and platinum prices.</div>
+
+    <div id="goldBox">
+      <div class="title"><span>🪙 Live gold price</span></div>
+      <div class="gold-grid">
+        <div class="gold-card"><div class="region">USA</div><div class="price" id="goldUSA">--</div><div class="unit">USD / oz</div></div>
+        <div class="gold-card"><div class="region">India</div><div class="price" id="goldIndia">--</div><div class="unit">INR / 10g, 24K</div></div>
+        <div class="gold-card"><div class="region">Telangana</div><div class="price" id="goldTelangana">--</div><div class="unit">INR / 10g, 24K</div></div>
+        <div class="gold-card"><div class="region">Andhra Pradesh</div><div class="price" id="goldAP">--</div><div class="unit">INR / 10g, 24K</div></div>
+        <div class="gold-card"><div class="region">Hyderabad</div><div class="price" id="goldHyderabad">--</div><div class="unit">INR / 10g, 24K</div></div>
+        <div class="gold-card"><div class="region">Guntur</div><div class="price" id="goldGuntur">--</div><div class="unit">INR / 10g, 24K</div></div>
+      </div>
+      <div class="updated-row">Last updated: <span id="goldUpdated">loading...</span></div>
+      <div class="note">USA shows the real global spot price. India/Telangana/Andhra Pradesh/Hyderabad/Guntur show the same national spot-converted rate — free live data doesn't track state or city dealer markups, so local jeweler prices may differ slightly.</div>
+    </div>
+
+    <div id="metalTrends">
+      <div class="title" style="font-size:12px;font-weight:600;margin-bottom:8px;">📈 Metal price trends <span style="font-weight:400;color:var(--muted);font-size:10px;">(builds live while this page stays open)</span></div>
+      <div class="metal-row">
+        <div class="metal-info"><div class="metal-name">Gold</div><div class="metal-price" id="goldTrendPrice">-- USD/oz</div></div>
+        <svg class="metal-spark" id="goldSpark" viewBox="0 0 200 36" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="metal-row">
+        <div class="metal-info"><div class="metal-name">Silver</div><div class="metal-price" id="silverTrendPrice">-- USD/oz</div></div>
+        <svg class="metal-spark" id="silverSpark" viewBox="0 0 200 36" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="metal-row">
+        <div class="metal-info"><div class="metal-name">Platinum</div><div class="metal-price" id="platinumTrendPrice">-- USD/oz</div></div>
+        <svg class="metal-spark" id="platinumSpark" viewBox="0 0 200 36" preserveAspectRatio="none"></svg>
+      </div>
+    </div>
+  </div>
+
   <div id="canvasWrap">
     <svg id="svg" viewBox="0 0 1200 750"></svg>
     <div id="tooltip"></div>
@@ -99,6 +158,7 @@
 
     <div class="row">
       <div class="metric-card">
+
         <div class="metric-label">Heart Rate</div>
         <div class="metric-value" id="hrValue">--<span class="metric-unit">bpm</span></div>
       </div>
@@ -554,6 +614,100 @@ async function fetchNews() {
 
 // refresh headlines automatically every 2 minutes, always appending only new items
 setInterval(fetchNews, 2 * 60 * 1000);
+
+// ---- LIVE GOLD / SILVER / PLATINUM PRICES + TRENDS ----
+const METAL_SYMBOLS = { gold: 'XAU', silver: 'XAG', platinum: 'XPT' };
+const metalHistory = { gold: [], silver: [], platinum: [] };
+const MAX_HISTORY_POINTS = 60;
+const OZ_TO_GRAMS = 31.1035;
+
+async function fetchUsdToInr() {
+  try {
+    const resp = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    const data = await resp.json();
+    return data.rates && data.rates.INR ? data.rates.INR : null;
+  } catch (err) {
+    console.error('Exchange rate fetch failed', err);
+    return null;
+  }
+}
+
+async function fetchMetalPrice(symbol) {
+  try {
+    const resp = await fetch('https://api.gold-api.com/price/' + symbol);
+    const data = await resp.json();
+    return data && typeof data.price === 'number' ? data.price : null;
+  } catch (err) {
+    console.error('Metal price fetch failed for ' + symbol, err);
+    return null;
+  }
+}
+
+function drawSparkline(svgId, points) {
+  const svg = document.getElementById(svgId);
+  if (points.length < 2) { svg.innerHTML = ''; return; }
+  const w = 200, h = 36, pad = 3;
+  const vals = points.map(p => p.price);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = (max - min) || 1;
+  const step = (w - pad * 2) / (points.length - 1);
+  const coords = points.map((p, i) => {
+    const x = pad + i * step;
+    const y = h - pad - ((p.price - min) / range) * (h - pad * 2);
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  });
+  const trendUp = points[points.length - 1].price >= points[0].price;
+  const color = trendUp ? '#7bd389' : '#ff5d7a';
+  svg.innerHTML = '<polyline points="' + coords.join(' ') + '" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
+}
+
+async function fetchGoldPrices() {
+  const [goldUsd, silverUsd, platinumUsd, inrRate] = await Promise.all([
+    fetchMetalPrice(METAL_SYMBOLS.gold),
+    fetchMetalPrice(METAL_SYMBOLS.silver),
+    fetchMetalPrice(METAL_SYMBOLS.platinum),
+    fetchUsdToInr(),
+  ]);
+
+  const now = Date.now();
+  const priceMap = { gold: goldUsd, silver: silverUsd, platinum: platinumUsd };
+
+  Object.keys(priceMap).forEach(metal => {
+    const price = priceMap[metal];
+    if (price != null) {
+      metalHistory[metal].push({ time: now, price });
+      if (metalHistory[metal].length > MAX_HISTORY_POINTS) metalHistory[metal].shift();
+      drawSparkline(metal + 'Spark', metalHistory[metal]);
+      document.getElementById(metal + 'TrendPrice').textContent = price.toFixed(2) + ' USD/oz';
+    } else {
+      document.getElementById(metal + 'TrendPrice').textContent = 'unavailable';
+    }
+  });
+
+  const now_ts = new Date();
+  document.getElementById('goldUpdated').textContent = now_ts.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + now_ts.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+  if (goldUsd != null) {
+    document.getElementById('goldUSA').textContent = '$' + goldUsd.toFixed(2);
+    if (inrRate != null) {
+      const per10gInr = (goldUsd / OZ_TO_GRAMS) * 10 * inrRate;
+      const formatted = '₹' + Math.round(per10gInr).toLocaleString('en-IN');
+      ['goldIndia', 'goldTelangana', 'goldAP', 'goldHyderabad', 'goldGuntur'].forEach(id => {
+        document.getElementById(id).textContent = formatted;
+      });
+    } else {
+      ['goldIndia', 'goldTelangana', 'goldAP', 'goldHyderabad', 'goldGuntur'].forEach(id => {
+        document.getElementById(id).textContent = 'rate unavailable';
+      });
+    }
+  } else {
+    document.getElementById('goldUSA').textContent = 'unavailable';
+  }
+}
+
+fetchGoldPrices();
+setInterval(fetchGoldPrices, 60 * 1000);
+
 
 // ---- REAL AIR QUALITY -> OXYGEN SLIDER ----
 async function fetchAirQuality() {
