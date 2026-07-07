@@ -14,6 +14,13 @@
   body { background:var(--bg); font-family: -apple-system, Segoe UI, Roboto, sans-serif; color: var(--text); display:flex; flex-direction:column; }
   #layout { display: flex; flex:1; min-height:0; }
   #canvasWrap { flex: 1; position: relative; min-height: 0; }
+  #viewToggle { position:absolute; top:12px; left:12px; z-index:10; display:flex; gap:6px; background:#0d1119cc; border:1px solid var(--border); border-radius:8px; padding:4px; }
+  .viewBtn { background:transparent; border:none; color:var(--muted); font-size:12px; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; }
+  .viewBtn.active { background:var(--accent2); color:#0d1119; }
+  #canvas3D { position:absolute; inset:0; display:none; }
+  #canvas3D.active { display:block; }
+  #canvas3D canvas { display:block; width:100%; height:100%; touch-action: none; }
+  #svg.hidden { display:none; }
   svg { width: 100%; height: 100%; display:block; touch-action: pan-x pan-y; }
   #panel { width: 340px; background: var(--panel); border-left: 1px solid var(--border); padding: 16px; overflow-y:auto; -webkit-overflow-scrolling: touch; }
   #leftPanel { width: 300px; background: var(--panel); border-right: 1px solid var(--border); padding: 16px; overflow-y:auto; -webkit-overflow-scrolling: touch; }
@@ -75,6 +82,22 @@
   .field-row { display:flex; gap:8px; }
   .field-row > div { flex:1; }
   #loadMsg { font-size:11px; color:var(--muted); text-align:center; padding:6px; }
+
+  #flightsBar { flex-shrink:0; background:#141925; border-top:1px solid var(--border); }
+  #flightsHeader { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; cursor:pointer; user-select:none; }
+  #flightsHeader .title { font-size:13px; font-weight:600; }
+  #flightsHeader .chevron { font-size:11px; color:var(--muted); transition: transform 0.2s; }
+  #flightsHeader.open .chevron { transform: rotate(180deg); }
+  #flightsContent { max-height:0; overflow:hidden; transition: max-height 0.25s ease; padding:0 16px; }
+  #flightsContent.open { max-height:280px; overflow-y:auto; padding:0 16px 14px; }
+  .flight-routes { display:flex; gap:14px; flex-wrap:wrap; }
+  .flight-card { flex:1; min-width:260px; background:#0d1119; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .flight-card .route { font-size:13px; font-weight:600; margin-bottom:4px; }
+  .flight-card .route-sub { font-size:11px; color:var(--muted); margin-bottom:10px; }
+  .flight-links { display:flex; gap:8px; flex-wrap:wrap; }
+  .flight-links a { font-size:11px; color:#0d1119; background:var(--accent2); padding:6px 10px; border-radius:6px; text-decoration:none; font-weight:600; }
+  .flight-links a.alt { background:transparent; border:1px solid var(--border); color:var(--text); }
+  .flights-note { font-size:10px; color:var(--muted); margin-top:10px; line-height:1.4; }
   #goldBox { background:#141925; border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
   #goldBox .title { font-size:12px; font-weight:600; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
   #goldBox .updated { font-size:10px; color:var(--muted); font-weight:400; }
@@ -125,7 +148,7 @@
     </div>
 
     <div id="metalTrends">
-      <div class="title" style="font-size:12px;font-weight:600;margin-bottom:8px;">📈 Metal price trends <span style="font-weight:400;color:var(--muted);font-size:10px;">(builds live while this page stays open)</span></div>
+      <div class="title" style="font-size:12px;font-weight:600;margin-bottom:8px;">📈 Metal price trends <span style="font-weight:400;color:var(--muted);font-size:10px;">(1-month history + live updates)</span></div>
       <div class="metal-row">
         <div class="metal-info"><div class="metal-name">Gold</div><div class="metal-price" id="goldTrendPrice">-- USD/oz</div></div>
         <svg class="metal-spark" id="goldSpark" viewBox="0 0 200 36" preserveAspectRatio="none"></svg>
@@ -142,7 +165,12 @@
   </div>
 
   <div id="canvasWrap">
+    <div id="viewToggle">
+      <button class="viewBtn active" id="btn2D">2D Graph</button>
+      <button class="viewBtn" id="btn3D">3D Body</button>
+    </div>
     <svg id="svg" viewBox="0 0 1200 750"></svg>
+    <div id="canvas3D"></div>
     <div id="tooltip"></div>
   </div>
   <div id="panel">
@@ -235,6 +263,36 @@
   </div>
 </div>
 
+<div id="flightsBar">
+  <div id="flightsHeader" onclick="document.getElementById('flightsHeader').classList.toggle('open'); document.getElementById('flightsContent').classList.toggle('open');">
+    <span class="title">✈️ Cheapest flights — Hyderabad to Delhi &amp; Bangkok</span>
+    <span class="chevron">▲</span>
+  </div>
+  <div id="flightsContent">
+    <div class="flight-routes">
+      <div class="flight-card">
+        <div class="route">HYD → DEL</div>
+        <div class="route-sub">Hyderabad to Delhi</div>
+        <div class="flight-links">
+          <a href="https://www.google.com/travel/flights?q=flights%20from%20HYD%20to%20DEL" target="_blank" rel="noopener">Google Flights</a>
+          <a class="alt" href="https://www.skyscanner.co.in/transport/flights/hyd/del/" target="_blank" rel="noopener">Skyscanner</a>
+        </div>
+      </div>
+      <div class="flight-card">
+        <div class="route">HYD → BKK</div>
+        <div class="route-sub">Hyderabad to Bangkok, Thailand</div>
+        <div class="flight-links">
+          <a href="https://www.google.com/travel/flights?q=flights%20from%20HYD%20to%20BKK" target="_blank" rel="noopener">Google Flights</a>
+          <a class="alt" href="https://www.skyscanner.co.in/transport/flights/hyd/bkk/" target="_blank" rel="noopener">Skyscanner</a>
+        </div>
+      </div>
+    </div>
+    <div class="flights-note">There's no free, no-signup API that provides genuinely live flight prices — real-time fares require a registered developer key (Amadeus, Skyscanner, or Kiwi all require free account signup). These buttons open the actual live search results directly on Google Flights / Skyscanner in a new tab, so the prices and discounts you see there are real and current. If you get a free Amadeus API key, this panel can be upgraded to show fares inline.</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 const graphData = {"nodes": [{"id": "Nose (Smell)", "x": 381.8, "y": 690.0, "type": "organ", "size": 9.0}, {"id": "Cerebrum", "x": 128.4, "y": 511.9, "type": "organ", "size": 9.0}, {"id": "Spine", "x": 1070.8, "y": 401.0, "type": "organ", "size": 9.0}, {"id": "Digestive System", "x": 264.5, "y": 287.2, "type": "system", "size": 21.0}, {"id": "Nervous System", "x": 303.3, "y": 453.6, "type": "system", "size": 21.666666666666664}, {"id": "Adrenal Glands", "x": 535.4, "y": 611.2, "type": "organ", "size": 9.0}, {"id": "Skull", "x": 837.2, "y": 319.7, "type": "organ", "size": 9.0}, {"id": "Small Intestine", "x": 324.0, "y": 237.2, "type": "organ", "size": 10.333333333333332}, {"id": "Gallbladder", "x": 69.3, "y": 240.1, "type": "organ", "size": 9.0}, {"id": "Endocrine System", "x": 450.0, "y": 538.1, "type": "system", "size": 17.0}, {"id": "Bladder", "x": 810.7, "y": 483.6, "type": "organ", "size": 9.666666666666666}, {"id": "Bronchi", "x": 141.4, "y": 260.2, "type": "organ", "size": 9.0}, {"id": "Reproductive System", "x": 939.6, "y": 437.6, "type": "system", "size": 15.666666666666666}, {"id": "Ovaries", "x": 447.4, "y": 663.7, "type": "organ", "size": 9.0}, {"id": "Urethra", "x": 1043.8, "y": 518.1, "type": "organ", "size": 9.0}, {"id": "Spleen", "x": 634.0, "y": 401.0, "type": "organ", "size": 10.0}, {"id": "Spinal Cord", "x": 171.0, "y": 517.6, "type": "organ", "size": 9.666666666666666}, {"id": "Cerebellum", "x": 184.2, "y": 548.3, "type": "organ", "size": 9.0}, {"id": "Aorta", "x": 869.8, "y": 164.0, "type": "organ", "size": 9.0}, {"id": "Trachea", "x": 321.0, "y": 129.6, "type": "organ", "size": 9.0}, {"id": "Sebaceous Glands", "x": 280.0, "y": 449.0, "type": "organ", "size": 9.0}, {"id": "Cardiac Muscle", "x": 694.2, "y": 82.1, "type": "organ", "size": 9.0}, {"id": "Sweat Glands", "x": 281.3, "y": 624.2, "type": "organ", "size": 9.666666666666666}, {"id": "Nose", "x": 295.0, "y": 340.1, "type": "organ", "size": 9.0}, {"id": "Skin", "x": 265.2, "y": 555.3, "type": "organ", "size": 10.333333333333332}, {"id": "Synapses", "x": 366.4, "y": 383.6, "type": "organ", "size": 9.0}, {"id": "Lymphocytes", "x": 721.4, "y": 634.2, "type": "organ", "size": 9.0}, {"id": "Skeletal Muscles", "x": 430.2, "y": 285.6, "type": "organ", "size": 10.333333333333332}, {"id": "Alveoli", "x": 124.5, "y": 289.0, "type": "organ", "size": 9.0}, {"id": "Human Body MOC", "x": 568.6, "y": 399.0, "type": "moc", "size": 23.666666666666668}, {"id": "Testes (Reproductive)", "x": 1140.0, "y": 445.8, "type": "organ", "size": 9.0}, {"id": "Thyroid", "x": 314.1, "y": 517.0, "type": "organ", "size": 9.0}, {"id": "Brainstem", "x": 263.1, "y": 365.7, "type": "organ", "size": 9.0}, {"id": "Circulatory System", "x": 737.8, "y": 247.1, "type": "system", "size": 22.333333333333332}, {"id": "Arteries", "x": 889.8, "y": 201.4, "type": "organ", "size": 9.0}, {"id": "Uterus", "x": 1076.0, "y": 349.4, "type": "organ", "size": 9.0}, {"id": "Esophagus", "x": 138.3, "y": 194.0, "type": "organ", "size": 9.0}, {"id": "Skeletal System", "x": 887.0, "y": 419.6, "type": "system", "size": 21.0}, {"id": "Peripheral Nerves", "x": 144.4, "y": 442.1, "type": "organ", "size": 9.0}, {"id": "Plasma", "x": 710.5, "y": 154.2, "type": "organ", "size": 9.0}, {"id": "Integumentary System", "x": 373.2, "y": 528.2, "type": "system", "size": 15.666666666666666}, {"id": "Immune System", "x": 661.4, "y": 525.3, "type": "system", "size": 16.666666666666664}, {"id": "Urinary System", "x": 848.4, "y": 477.3, "type": "system", "size": 15.666666666666666}, {"id": "Ovaries (Reproductive)", "x": 997.7, "y": 536.9, "type": "organ", "size": 9.0}, {"id": "Large Intestine", "x": 425.5, "y": 359.6, "type": "organ", "size": 9.0}, {"id": "Bone Marrow", "x": 810.8, "y": 406.7, "type": "organ", "size": 11.0}, {"id": "Brain", "x": 249.8, "y": 578.3, "type": "organ", "size": 12.333333333333332}, {"id": "White Blood Cells", "x": 837.6, "y": 328.9, "type": "organ", "size": 9.666666666666666}, {"id": "Tongue", "x": 605.1, "y": 627.8, "type": "organ", "size": 9.0}, {"id": "Hair", "x": 228.3, "y": 635.8, "type": "organ", "size": 9.0}, {"id": "Pelvis", "x": 703.4, "y": 398.7, "type": "organ", "size": 9.0}, {"id": "Heart", "x": 611.3, "y": 198.9, "type": "organ", "size": 10.333333333333332}, {"id": "Ribs", "x": 1003.9, "y": 473.3, "type": "organ", "size": 9.0}, {"id": "Femur", "x": 1084.1, "y": 468.2, "type": "organ", "size": 9.0}, {"id": "Hypothalamus", "x": 309.6, "y": 545.4, "type": "organ", "size": 11.0}, {"id": "Smooth Muscles", "x": 559.2, "y": 60.0, "type": "organ", "size": 9.0}, {"id": "Humerus", "x": 1025.0, "y": 434.1, "type": "organ", "size": 9.0}, {"id": "Sensory Organs", "x": 466.3, "y": 586.0, "type": "system", "size": 15.666666666666666}, {"id": "Ears", "x": 347.1, "y": 607.0, "type": "organ", "size": 9.666666666666666}, {"id": "Diaphragm", "x": 330.4, "y": 152.8, "type": "organ", "size": 9.666666666666666}, {"id": "Pharynx", "x": 172.3, "y": 274.3, "type": "organ", "size": 9.0}, {"id": "Lymph Nodes", "x": 577.9, "y": 652.6, "type": "organ", "size": 9.0}, {"id": "Veins", "x": 830.3, "y": 137.4, "type": "organ", "size": 9.0}, {"id": "Ureters", "x": 901.2, "y": 589.7, "type": "organ", "size": 9.0}, {"id": "Nails", "x": 529.4, "y": 510.1, "type": "organ", "size": 9.0}, {"id": "Eyes", "x": 325.2, "y": 662.5, "type": "organ", "size": 9.666666666666666}, {"id": "Kidneys", "x": 744.0, "y": 393.7, "type": "organ", "size": 10.333333333333332}, {"id": "Mouth", "x": 133.9, "y": 371.1, "type": "organ", "size": 9.0}, {"id": "Prostate", "x": 1084.2, "y": 373.0, "type": "organ", "size": 9.0}, {"id": "Fallopian Tubes", "x": 1025.0, "y": 556.0, "type": "organ", "size": 9.0}, {"id": "Pancreas", "x": 401.4, "y": 232.8, "type": "organ", "size": 10.333333333333332}, {"id": "Rectum", "x": 95.7, "y": 210.8, "type": "organ", "size": 9.0}, {"id": "Ligaments", "x": 614.0, "y": 62.7, "type": "organ", "size": 9.0}, {"id": "Capillaries", "x": 608.8, "y": 243.2, "type": "organ", "size": 9.0}, {"id": "Larynx", "x": 163.1, "y": 138.8, "type": "organ", "size": 9.0}, {"id": "Pituitary Gland", "x": 319.5, "y": 579.4, "type": "organ", "size": 10.333333333333332}, {"id": "Nephrons", "x": 1034.3, "y": 470.9, "type": "organ", "size": 9.0}, {"id": "Muscular System", "x": 566.5, "y": 185.5, "type": "system", "size": 15.666666666666666}, {"id": "Platelets", "x": 735.6, "y": 330.6, "type": "organ", "size": 9.0}, {"id": "Liver", "x": 399.8, "y": 254.8, "type": "organ", "size": 10.333333333333332}, {"id": "Blood", "x": 576.3, "y": 279.6, "type": "organ", "size": 13.0}, {"id": "Neurons", "x": 411.1, "y": 381.7, "type": "organ", "size": 9.0}, {"id": "Joints", "x": 1014.7, "y": 512.2, "type": "organ", "size": 9.0}, {"id": "Antibodies", "x": 713.8, "y": 656.4, "type": "organ", "size": 9.0}, {"id": "Thymus", "x": 503.4, "y": 485.7, "type": "organ", "size": 9.0}, {"id": "Lungs", "x": 452.6, "y": 195.5, "type": "organ", "size": 11.0}, {"id": "Testes", "x": 569.9, "y": 453.2, "type": "organ", "size": 9.0}, {"id": "Red Blood Cells", "x": 863.2, "y": 288.9, "type": "organ", "size": 9.666666666666666}, {"id": "Cartilage", "x": 831.9, "y": 358.9, "type": "organ", "size": 9.0}, {"id": "Stomach", "x": 60.0, "y": 285.9, "type": "organ", "size": 9.0}, {"id": "Skin (Touch)", "x": 524.3, "y": 544.2, "type": "organ", "size": 9.0}, {"id": "Tendons", "x": 476.3, "y": 168.2, "type": "organ", "size": 9.666666666666666}, {"id": "Respiratory System", "x": 293.6, "y": 237.8, "type": "system", "size": 21.0}, {"id": "Bronchioles", "x": 208.1, "y": 121.0, "type": "organ", "size": 9.0}], "edges": [{"from": "Nose (Smell)", "to": "Sensory Organs"}, {"from": "Nose (Smell)", "to": "Sensory Organs"}, {"from": "Cerebrum", "to": "Nervous System"}, {"from": "Cerebrum", "to": "Nervous System"}, {"from": "Spine", "to": "Skeletal System"}, {"from": "Spine", "to": "Skeletal System"}, {"from": "Digestive System", "to": "Human Body MOC"}, {"from": "Digestive System", "to": "Mouth"}, {"from": "Digestive System", "to": "Esophagus"}, {"from": "Digestive System", "to": "Stomach"}, {"from": "Digestive System", "to": "Small Intestine"}, {"from": "Digestive System", "to": "Large Intestine"}, {"from": "Digestive System", "to": "Liver"}, {"from": "Digestive System", "to": "Pancreas"}, {"from": "Digestive System", "to": "Gallbladder"}, {"from": "Digestive System", "to": "Rectum"}, {"from": "Digestive System", "to": "Esophagus"}, {"from": "Digestive System", "to": "Gallbladder"}, {"from": "Digestive System", "to": "Human Body MOC"}, {"from": "Digestive System", "to": "Large Intestine"}, {"from": "Digestive System", "to": "Liver"}, {"from": "Digestive System", "to": "Mouth"}, {"from": "Digestive System", "to": "Pancreas"}, {"from": "Digestive System", "to": "Rectum"}, {"from": "Digestive System", "to": "Small Intestine"}, {"from": "Digestive System", "to": "Stomach"}, {"from": "Nervous System", "to": "Human Body MOC"}, {"from": "Nervous System", "to": "Brain"}, {"from": "Nervous System", "to": "Spinal Cord"}, {"from": "Nervous System", "to": "Neurons"}, {"from": "Nervous System", "to": "Cerebrum"}, {"from": "Nervous System", "to": "Cerebellum"}, {"from": "Nervous System", "to": "Brainstem"}, {"from": "Nervous System", "to": "Peripheral Nerves"}, {"from": "Nervous System", "to": "Synapses"}, {"from": "Nervous System", "to": "Brain"}, {"from": "Nervous System", "to": "Brainstem"}, {"from": "Nervous System", "to": "Cerebellum"}, {"from": "Nervous System", "to": "Cerebrum"}, {"from": "Nervous System", "to": "Human Body MOC"}, {"from": "Nervous System", "to": "Hypothalamus"}, {"from": "Nervous System", "to": "Neurons"}, {"from": "Nervous System", "to": "Peripheral Nerves"}, {"from": "Nervous System", "to": "Skeletal Muscles"}, {"from": "Nervous System", "to": "Skin"}, {"from": "Nervous System", "to": "Spinal Cord"}, {"from": "Nervous System", "to": "Synapses"}, {"from": "Adrenal Glands", "to": "Endocrine System"}, {"from": "Adrenal Glands", "to": "Endocrine System"}, {"from": "Skull", "to": "Skeletal System"}, {"from": "Skull", "to": "Skeletal System"}, {"from": "Small Intestine", "to": "Digestive System"}, {"from": "Small Intestine", "to": "Digestive System"}, {"from": "Small Intestine", "to": "Liver"}, {"from": "Small Intestine", "to": "Pancreas"}, {"from": "Gallbladder", "to": "Digestive System"}, {"from": "Gallbladder", "to": "Digestive System"}, {"from": "Endocrine System", "to": "Human Body MOC"}, {"from": "Endocrine System", "to": "Pituitary Gland"}, {"from": "Endocrine System", "to": "Thyroid"}, {"from": "Endocrine System", "to": "Adrenal Glands"}, {"from": "Endocrine System", "to": "Ovaries"}, {"from": "Endocrine System", "to": "Testes"}, {"from": "Endocrine System", "to": "Hypothalamus"}, {"from": "Endocrine System", "to": "Adrenal Glands"}, {"from": "Endocrine System", "to": "Human Body MOC"}, {"from": "Endocrine System", "to": "Hypothalamus"}, {"from": "Endocrine System", "to": "Ovaries"}, {"from": "Endocrine System", "to": "Pituitary Gland"}, {"from": "Endocrine System", "to": "Testes"}, {"from": "Endocrine System", "to": "Thyroid"}, {"from": "Bladder", "to": "Urinary System"}, {"from": "Bladder", "to": "Kidneys"}, {"from": "Bladder", "to": "Urinary System"}, {"from": "Bronchi", "to": "Respiratory System"}, {"from": "Bronchi", "to": "Respiratory System"}, {"from": "Reproductive System", "to": "Human Body MOC"}, {"from": "Reproductive System", "to": "Uterus"}, {"from": "Reproductive System", "to": "Ovaries (Reproductive)"}, {"from": "Reproductive System", "to": "Fallopian Tubes"}, {"from": "Reproductive System", "to": "Testes (Reproductive)"}, {"from": "Reproductive System", "to": "Prostate"}, {"from": "Reproductive System", "to": "Fallopian Tubes"}, {"from": "Reproductive System", "to": "Human Body MOC"}, {"from": "Reproductive System", "to": "Ovaries (Reproductive)"}, {"from": "Reproductive System", "to": "Prostate"}, {"from": "Reproductive System", "to": "Testes (Reproductive)"}, {"from": "Reproductive System", "to": "Uterus"}, {"from": "Ovaries", "to": "Endocrine System"}, {"from": "Ovaries", "to": "Endocrine System"}, {"from": "Urethra", "to": "Urinary System"}, {"from": "Urethra", "to": "Urinary System"}, {"from": "Spleen", "to": "Immune System"}, {"from": "Spleen", "to": "Blood"}, {"from": "Spleen", "to": "Immune System"}, {"from": "Spleen", "to": "Immune System"}, {"from": "Spinal Cord", "to": "Nervous System"}, {"from": "Spinal Cord", "to": "Brain"}, {"from": "Spinal Cord", "to": "Nervous System"}, {"from": "Cerebellum", "to": "Nervous System"}, {"from": "Cerebellum", "to": "Nervous System"}, {"from": "Aorta", "to": "Circulatory System"}, {"from": "Aorta", "to": "Circulatory System"}, {"from": "Trachea", "to": "Respiratory System"}, {"from": "Trachea", "to": "Respiratory System"}, {"from": "Sebaceous Glands", "to": "Integumentary System"}, {"from": "Sebaceous Glands", "to": "Integumentary System"}, {"from": "Cardiac Muscle", "to": "Muscular System"}, {"from": "Cardiac Muscle", "to": "Muscular System"}, {"from": "Sweat Glands", "to": "Integumentary System"}, {"from": "Sweat Glands", "to": "Integumentary System"}, {"from": "Sweat Glands", "to": "Skin"}, {"from": "Nose", "to": "Respiratory System"}, {"from": "Nose", "to": "Respiratory System"}, {"from": "Skin", "to": "Integumentary System"}, {"from": "Skin", "to": "Sweat Glands"}, {"from": "Skin", "to": "Nervous System"}, {"from": "Skin", "to": "Integumentary System"}, {"from": "Synapses", "to": "Nervous System"}, {"from": "Synapses", "to": "Nervous System"}, {"from": "Lymphocytes", "to": "Immune System"}, {"from": "Lymphocytes", "to": "Immune System"}, {"from": "Skeletal Muscles", "to": "Muscular System"}, {"from": "Skeletal Muscles", "to": "Nervous System"}, {"from": "Skeletal Muscles", "to": "Tendons"}, {"from": "Skeletal Muscles", "to": "Muscular System"}, {"from": "Alveoli", "to": "Respiratory System"}, {"from": "Alveoli", "to": "Respiratory System"}, {"from": "Human Body MOC", "to": "Circulatory System"}, {"from": "Human Body MOC", "to": "Respiratory System"}, {"from": "Human Body MOC", "to": "Nervous System"}, {"from": "Human Body MOC", "to": "Digestive System"}, {"from": "Human Body MOC", "to": "Skeletal System"}, {"from": "Human Body MOC", "to": "Muscular System"}, {"from": "Human Body MOC", "to": "Endocrine System"}, {"from": "Human Body MOC", "to": "Immune System"}, {"from": "Human Body MOC", "to": "Urinary System"}, {"from": "Human Body MOC", "to": "Integumentary System"}, {"from": "Human Body MOC", "to": "Reproductive System"}, {"from": "Human Body MOC", "to": "Sensory Organs"}, {"from": "Human Body MOC", "to": "Circulatory System"}, {"from": "Human Body MOC", "to": "Digestive System"}, {"from": "Human Body MOC", "to": "Endocrine System"}, {"from": "Human Body MOC", "to": "Immune System"}, {"from": "Human Body MOC", "to": "Integumentary System"}, {"from": "Human Body MOC", "to": "Muscular System"}, {"from": "Human Body MOC", "to": "Nervous System"}, {"from": "Human Body MOC", "to": "Reproductive System"}, {"from": "Human Body MOC", "to": "Respiratory System"}, {"from": "Human Body MOC", "to": "Sensory Organs"}, {"from": "Human Body MOC", "to": "Skeletal System"}, {"from": "Human Body MOC", "to": "Urinary System"}, {"from": "Testes (Reproductive)", "to": "Reproductive System"}, {"from": "Testes (Reproductive)", "to": "Reproductive System"}, {"from": "Thyroid", "to": "Endocrine System"}, {"from": "Thyroid", "to": "Endocrine System"}, {"from": "Brainstem", "to": "Nervous System"}, {"from": "Brainstem", "to": "Nervous System"}, {"from": "Circulatory System", "to": "Human Body MOC"}, {"from": "Circulatory System", "to": "Heart"}, {"from": "Circulatory System", "to": "Aorta"}, {"from": "Circulatory System", "to": "Arteries"}, {"from": "Circulatory System", "to": "Veins"}, {"from": "Circulatory System", "to": "Capillaries"}, {"from": "Circulatory System", "to": "Blood"}, {"from": "Circulatory System", "to": "Red Blood Cells"}, {"from": "Circulatory System", "to": "White Blood Cells"}, {"from": "Circulatory System", "to": "Platelets"}, {"from": "Circulatory System", "to": "Plasma"}, {"from": "Circulatory System", "to": "Aorta"}, {"from": "Circulatory System", "to": "Arteries"}, {"from": "Circulatory System", "to": "Blood"}, {"from": "Circulatory System", "to": "Capillaries"}, {"from": "Circulatory System", "to": "Heart"}, {"from": "Circulatory System", "to": "Human Body MOC"}, {"from": "Circulatory System", "to": "Plasma"}, {"from": "Circulatory System", "to": "Platelets"}, {"from": "Circulatory System", "to": "Red Blood Cells"}, {"from": "Circulatory System", "to": "Veins"}, {"from": "Circulatory System", "to": "White Blood Cells"}, {"from": "Arteries", "to": "Circulatory System"}, {"from": "Arteries", "to": "Circulatory System"}, {"from": "Uterus", "to": "Reproductive System"}, {"from": "Uterus", "to": "Reproductive System"}, {"from": "Esophagus", "to": "Digestive System"}, {"from": "Esophagus", "to": "Digestive System"}, {"from": "Skeletal System", "to": "Human Body MOC"}, {"from": "Skeletal System", "to": "Skull"}, {"from": "Skeletal System", "to": "Spine"}, {"from": "Skeletal System", "to": "Ribs"}, {"from": "Skeletal System", "to": "Femur"}, {"from": "Skeletal System", "to": "Pelvis"}, {"from": "Skeletal System", "to": "Humerus"}, {"from": "Skeletal System", "to": "Joints"}, {"from": "Skeletal System", "to": "Cartilage"}, {"from": "Skeletal System", "to": "Bone Marrow"}, {"from": "Skeletal System", "to": "Bone Marrow"}, {"from": "Skeletal System", "to": "Cartilage"}, {"from": "Skeletal System", "to": "Femur"}, {"from": "Skeletal System", "to": "Human Body MOC"}, {"from": "Skeletal System", "to": "Humerus"}, {"from": "Skeletal System", "to": "Joints"}, {"from": "Skeletal System", "to": "Pelvis"}, {"from": "Skeletal System", "to": "Ribs"}, {"from": "Skeletal System", "to": "Skull"}, {"from": "Skeletal System", "to": "Spine"}, {"from": "Peripheral Nerves", "to": "Nervous System"}, {"from": "Peripheral Nerves", "to": "Nervous System"}, {"from": "Plasma", "to": "Circulatory System"}, {"from": "Plasma", "to": "Circulatory System"}, {"from": "Integumentary System", "to": "Human Body MOC"}, {"from": "Integumentary System", "to": "Skin"}, {"from": "Integumentary System", "to": "Hair"}, {"from": "Integumentary System", "to": "Nails"}, {"from": "Integumentary System", "to": "Sweat Glands"}, {"from": "Integumentary System", "to": "Sebaceous Glands"}, {"from": "Integumentary System", "to": "Hair"}, {"from": "Integumentary System", "to": "Human Body MOC"}, {"from": "Integumentary System", "to": "Nails"}, {"from": "Integumentary System", "to": "Sebaceous Glands"}, {"from": "Integumentary System", "to": "Skin"}, {"from": "Integumentary System", "to": "Sweat Glands"}, {"from": "Immune System", "to": "Human Body MOC"}, {"from": "Immune System", "to": "Lymph Nodes"}, {"from": "Immune System", "to": "Spleen"}, {"from": "Immune System", "to": "Thymus"}, {"from": "Immune System", "to": "Antibodies"}, {"from": "Immune System", "to": "Lymphocytes"}, {"from": "Immune System", "to": "Antibodies"}, {"from": "Immune System", "to": "Bone Marrow"}, {"from": "Immune System", "to": "Human Body MOC"}, {"from": "Immune System", "to": "Lymph Nodes"}, {"from": "Immune System", "to": "Lymphocytes"}, {"from": "Immune System", "to": "Spleen"}, {"from": "Immune System", "to": "Thymus"}, {"from": "Urinary System", "to": "Human Body MOC"}, {"from": "Urinary System", "to": "Kidneys"}, {"from": "Urinary System", "to": "Bladder"}, {"from": "Urinary System", "to": "Ureters"}, {"from": "Urinary System", "to": "Urethra"}, {"from": "Urinary System", "to": "Nephrons"}, {"from": "Urinary System", "to": "Bladder"}, {"from": "Urinary System", "to": "Human Body MOC"}, {"from": "Urinary System", "to": "Kidneys"}, {"from": "Urinary System", "to": "Nephrons"}, {"from": "Urinary System", "to": "Ureters"}, {"from": "Urinary System", "to": "Urethra"}, {"from": "Ovaries (Reproductive)", "to": "Reproductive System"}, {"from": "Ovaries (Reproductive)", "to": "Reproductive System"}, {"from": "Large Intestine", "to": "Digestive System"}, {"from": "Large Intestine", "to": "Digestive System"}, {"from": "Bone Marrow", "to": "Skeletal System"}, {"from": "Bone Marrow", "to": "Red Blood Cells"}, {"from": "Bone Marrow", "to": "White Blood Cells"}, {"from": "Bone Marrow", "to": "Immune System"}, {"from": "Bone Marrow", "to": "Skeletal System"}, {"from": "Brain", "to": "Nervous System"}, {"from": "Brain", "to": "Spinal Cord"}, {"from": "Brain", "to": "Pituitary Gland"}, {"from": "Brain", "to": "Hypothalamus"}, {"from": "Brain", "to": "Ears"}, {"from": "Brain", "to": "Eyes"}, {"from": "Brain", "to": "Nervous System"}, {"from": "White Blood Cells", "to": "Circulatory System"}, {"from": "White Blood Cells", "to": "Bone Marrow"}, {"from": "White Blood Cells", "to": "Circulatory System"}, {"from": "Tongue", "to": "Sensory Organs"}, {"from": "Tongue", "to": "Sensory Organs"}, {"from": "Hair", "to": "Integumentary System"}, {"from": "Hair", "to": "Integumentary System"}, {"from": "Pelvis", "to": "Skeletal System"}, {"from": "Pelvis", "to": "Skeletal System"}, {"from": "Heart", "to": "Circulatory System"}, {"from": "Heart", "to": "Lungs"}, {"from": "Heart", "to": "Blood"}, {"from": "Heart", "to": "Circulatory System"}, {"from": "Ribs", "to": "Skeletal System"}, {"from": "Ribs", "to": "Skeletal System"}, {"from": "Femur", "to": "Skeletal System"}, {"from": "Femur", "to": "Skeletal System"}, {"from": "Hypothalamus", "to": "Endocrine System"}, {"from": "Hypothalamus", "to": "Pituitary Gland"}, {"from": "Hypothalamus", "to": "Nervous System"}, {"from": "Hypothalamus", "to": "Brain"}, {"from": "Hypothalamus", "to": "Endocrine System"}, {"from": "Smooth Muscles", "to": "Muscular System"}, {"from": "Smooth Muscles", "to": "Muscular System"}, {"from": "Humerus", "to": "Skeletal System"}, {"from": "Humerus", "to": "Skeletal System"}, {"from": "Sensory Organs", "to": "Human Body MOC"}, {"from": "Sensory Organs", "to": "Eyes"}, {"from": "Sensory Organs", "to": "Ears"}, {"from": "Sensory Organs", "to": "Tongue"}, {"from": "Sensory Organs", "to": "Skin (Touch)"}, {"from": "Sensory Organs", "to": "Nose (Smell)"}, {"from": "Sensory Organs", "to": "Ears"}, {"from": "Sensory Organs", "to": "Eyes"}, {"from": "Sensory Organs", "to": "Human Body MOC"}, {"from": "Sensory Organs", "to": "Nose (Smell)"}, {"from": "Sensory Organs", "to": "Skin (Touch)"}, {"from": "Sensory Organs", "to": "Tongue"}, {"from": "Ears", "to": "Sensory Organs"}, {"from": "Ears", "to": "Brain"}, {"from": "Ears", "to": "Sensory Organs"}, {"from": "Diaphragm", "to": "Respiratory System"}, {"from": "Diaphragm", "to": "Lungs"}, {"from": "Diaphragm", "to": "Respiratory System"}, {"from": "Pharynx", "to": "Respiratory System"}, {"from": "Pharynx", "to": "Respiratory System"}, {"from": "Lymph Nodes", "to": "Immune System"}, {"from": "Lymph Nodes", "to": "Immune System"}, {"from": "Veins", "to": "Circulatory System"}, {"from": "Veins", "to": "Circulatory System"}, {"from": "Ureters", "to": "Urinary System"}, {"from": "Ureters", "to": "Urinary System"}, {"from": "Nails", "to": "Integumentary System"}, {"from": "Nails", "to": "Integumentary System"}, {"from": "Eyes", "to": "Sensory Organs"}, {"from": "Eyes", "to": "Brain"}, {"from": "Eyes", "to": "Sensory Organs"}, {"from": "Kidneys", "to": "Urinary System"}, {"from": "Kidneys", "to": "Blood"}, {"from": "Kidneys", "to": "Bladder"}, {"from": "Kidneys", "to": "Urinary System"}, {"from": "Mouth", "to": "Digestive System"}, {"from": "Mouth", "to": "Digestive System"}, {"from": "Prostate", "to": "Reproductive System"}, {"from": "Prostate", "to": "Reproductive System"}, {"from": "Fallopian Tubes", "to": "Reproductive System"}, {"from": "Fallopian Tubes", "to": "Reproductive System"}, {"from": "Pancreas", "to": "Digestive System"}, {"from": "Pancreas", "to": "Small Intestine"}, {"from": "Pancreas", "to": "Blood"}, {"from": "Pancreas", "to": "Digestive System"}, {"from": "Rectum", "to": "Digestive System"}, {"from": "Rectum", "to": "Digestive System"}, {"from": "Ligaments", "to": "Muscular System"}, {"from": "Ligaments", "to": "Muscular System"}, {"from": "Capillaries", "to": "Circulatory System"}, {"from": "Capillaries", "to": "Circulatory System"}, {"from": "Larynx", "to": "Respiratory System"}, {"from": "Larynx", "to": "Respiratory System"}, {"from": "Pituitary Gland", "to": "Endocrine System"}, {"from": "Pituitary Gland", "to": "Brain"}, {"from": "Pituitary Gland", "to": "Endocrine System"}, {"from": "Pituitary Gland", "to": "Hypothalamus"}, {"from": "Nephrons", "to": "Urinary System"}, {"from": "Nephrons", "to": "Urinary System"}, {"from": "Muscular System", "to": "Human Body MOC"}, {"from": "Muscular System", "to": "Skeletal Muscles"}, {"from": "Muscular System", "to": "Smooth Muscles"}, {"from": "Muscular System", "to": "Cardiac Muscle"}, {"from": "Muscular System", "to": "Tendons"}, {"from": "Muscular System", "to": "Ligaments"}, {"from": "Muscular System", "to": "Cardiac Muscle"}, {"from": "Muscular System", "to": "Human Body MOC"}, {"from": "Muscular System", "to": "Ligaments"}, {"from": "Muscular System", "to": "Skeletal Muscles"}, {"from": "Muscular System", "to": "Smooth Muscles"}, {"from": "Muscular System", "to": "Tendons"}, {"from": "Platelets", "to": "Circulatory System"}, {"from": "Platelets", "to": "Circulatory System"}, {"from": "Liver", "to": "Digestive System"}, {"from": "Liver", "to": "Blood"}, {"from": "Liver", "to": "Small Intestine"}, {"from": "Liver", "to": "Digestive System"}, {"from": "Blood", "to": "Circulatory System"}, {"from": "Blood", "to": "Circulatory System"}, {"from": "Blood", "to": "Heart"}, {"from": "Blood", "to": "Kidneys"}, {"from": "Blood", "to": "Liver"}, {"from": "Blood", "to": "Lungs"}, {"from": "Blood", "to": "Pancreas"}, {"from": "Blood", "to": "Spleen"}, {"from": "Neurons", "to": "Nervous System"}, {"from": "Neurons", "to": "Nervous System"}, {"from": "Joints", "to": "Skeletal System"}, {"from": "Joints", "to": "Skeletal System"}, {"from": "Antibodies", "to": "Immune System"}, {"from": "Antibodies", "to": "Immune System"}, {"from": "Thymus", "to": "Immune System"}, {"from": "Thymus", "to": "Immune System"}, {"from": "Lungs", "to": "Respiratory System"}, {"from": "Lungs", "to": "Diaphragm"}, {"from": "Lungs", "to": "Blood"}, {"from": "Lungs", "to": "Heart"}, {"from": "Lungs", "to": "Respiratory System"}, {"from": "Testes", "to": "Endocrine System"}, {"from": "Testes", "to": "Endocrine System"}, {"from": "Red Blood Cells", "to": "Circulatory System"}, {"from": "Red Blood Cells", "to": "Bone Marrow"}, {"from": "Red Blood Cells", "to": "Circulatory System"}, {"from": "Cartilage", "to": "Skeletal System"}, {"from": "Cartilage", "to": "Skeletal System"}, {"from": "Stomach", "to": "Digestive System"}, {"from": "Stomach", "to": "Digestive System"}, {"from": "Skin (Touch)", "to": "Sensory Organs"}, {"from": "Skin (Touch)", "to": "Sensory Organs"}, {"from": "Tendons", "to": "Muscular System"}, {"from": "Tendons", "to": "Muscular System"}, {"from": "Tendons", "to": "Skeletal Muscles"}, {"from": "Respiratory System", "to": "Human Body MOC"}, {"from": "Respiratory System", "to": "Lungs"}, {"from": "Respiratory System", "to": "Trachea"}, {"from": "Respiratory System", "to": "Bronchi"}, {"from": "Respiratory System", "to": "Bronchioles"}, {"from": "Respiratory System", "to": "Alveoli"}, {"from": "Respiratory System", "to": "Diaphragm"}, {"from": "Respiratory System", "to": "Nose"}, {"from": "Respiratory System", "to": "Pharynx"}, {"from": "Respiratory System", "to": "Larynx"}, {"from": "Respiratory System", "to": "Alveoli"}, {"from": "Respiratory System", "to": "Bronchi"}, {"from": "Respiratory System", "to": "Bronchioles"}, {"from": "Respiratory System", "to": "Diaphragm"}, {"from": "Respiratory System", "to": "Human Body MOC"}, {"from": "Respiratory System", "to": "Larynx"}, {"from": "Respiratory System", "to": "Lungs"}, {"from": "Respiratory System", "to": "Nose"}, {"from": "Respiratory System", "to": "Pharynx"}, {"from": "Respiratory System", "to": "Trachea"}, {"from": "Bronchioles", "to": "Respiratory System"}, {"from": "Bronchioles", "to": "Respiratory System"}]};
 
@@ -616,14 +674,22 @@ async function fetchNews() {
 setInterval(fetchNews, 2 * 60 * 1000);
 
 // ---- LIVE GOLD / SILVER / PLATINUM PRICES + TRENDS ----
-const METAL_SYMBOLS = { gold: 'XAU', silver: 'XAG', platinum: 'XPT' };
+// Primary source: Yahoo Finance (real COMEX/NYMEX futures data, same feed used by brokerages).
+// Yahoo doesn't set CORS headers for browser fetches, so we route through a public CORS relay.
+// Fallback: gold-api.com, a free community mirror, used only if Yahoo/relay is unreachable.
+const YAHOO_SYMBOLS = { gold: 'GC=F', silver: 'SI=F', platinum: 'PL=F' };
+const FALLBACK_SYMBOLS = { gold: 'XAU', silver: 'XAG', platinum: 'XPT' };
+const CORS_RELAY = 'https://api.allorigins.win/raw?url=';
 const metalHistory = { gold: [], silver: [], platinum: [] };
 const MAX_HISTORY_POINTS = 60;
 const OZ_TO_GRAMS = 31.1035;
+let monthlyHistoryLoaded = false;
 
 async function fetchUsdToInr() {
+  // Frankfurter wraps the European Central Bank's own official daily reference rates —
+  // a central bank source, the most authoritative free option available.
   try {
-    const resp = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    const resp = await fetch('https://api.frankfurter.app/latest?from=USD&to=INR');
     const data = await resp.json();
     return data.rates && data.rates.INR ? data.rates.INR : null;
   } catch (err) {
@@ -632,15 +698,52 @@ async function fetchUsdToInr() {
   }
 }
 
-async function fetchMetalPrice(symbol) {
+async function fetchYahooChart(metal, range, interval) {
+  const symbol = YAHOO_SYMBOLS[metal];
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(symbol) + '?range=' + range + '&interval=' + interval;
+  const resp = await fetch(CORS_RELAY + encodeURIComponent(url));
+  const data = await resp.json();
+  const result = data.chart && data.chart.result && data.chart.result[0];
+  if (!result) throw new Error('no Yahoo result for ' + metal);
+  return result;
+}
+
+async function fetchMetalPrice(metal) {
   try {
-    const resp = await fetch('https://api.gold-api.com/price/' + symbol);
-    const data = await resp.json();
-    return data && typeof data.price === 'number' ? data.price : null;
+    const result = await fetchYahooChart(metal, '1d', '1m');
+    const price = result.meta && result.meta.regularMarketPrice;
+    if (typeof price === 'number') return price;
+    throw new Error('no price in Yahoo response');
   } catch (err) {
-    console.error('Metal price fetch failed for ' + symbol, err);
-    return null;
+    console.error('Yahoo fetch failed for ' + metal + ', falling back to gold-api.com', err);
+    try {
+      const resp = await fetch('https://api.gold-api.com/price/' + FALLBACK_SYMBOLS[metal]);
+      const data = await resp.json();
+      return data && typeof data.price === 'number' ? data.price : null;
+    } catch (err2) {
+      console.error('Fallback also failed for ' + metal, err2);
+      return null;
+    }
   }
+}
+
+async function loadMonthlyHistory() {
+  if (monthlyHistoryLoaded) return;
+  monthlyHistoryLoaded = true;
+  await Promise.all(Object.keys(YAHOO_SYMBOLS).map(async (metal) => {
+    try {
+      const result = await fetchYahooChart(metal, '1mo', '1d');
+      const timestamps = result.timestamp || [];
+      const closes = (result.indicators && result.indicators.quote && result.indicators.quote[0] && result.indicators.quote[0].close) || [];
+      const points = timestamps.map((t, i) => ({ time: t * 1000, price: closes[i] })).filter(p => typeof p.price === 'number');
+      if (points.length > 1) {
+        metalHistory[metal] = points.slice(-MAX_HISTORY_POINTS);
+        drawSparkline(metal + 'Spark', metalHistory[metal]);
+      }
+    } catch (err) {
+      console.error('Monthly history failed for ' + metal + ' — trend will build live from now instead', err);
+    }
+  }));
 }
 
 function drawSparkline(svgId, points) {
@@ -662,10 +765,12 @@ function drawSparkline(svgId, points) {
 }
 
 async function fetchGoldPrices() {
+  await loadMonthlyHistory();
+
   const [goldUsd, silverUsd, platinumUsd, inrRate] = await Promise.all([
-    fetchMetalPrice(METAL_SYMBOLS.gold),
-    fetchMetalPrice(METAL_SYMBOLS.silver),
-    fetchMetalPrice(METAL_SYMBOLS.platinum),
+    fetchMetalPrice('gold'),
+    fetchMetalPrice('silver'),
+    fetchMetalPrice('platinum'),
     fetchUsdToInr(),
   ]);
 
@@ -858,6 +963,218 @@ function animate() {
   requestAnimationFrame(animate);
 }
 animate();
+
+// ---- 3D HUMAN BODY VIEW ----
+// Major organs placed at approximate anatomical positions (not all 94 flat-graph nodes —
+// that would just be visual clutter on a human silhouette). Units are arbitrary 3D world units,
+// y = up, human standing facing +z.
+const ORGAN_3D_POSITIONS = {
+  'Brain':          { x: 0,     y: 9.0, z: 0,    r: 0.34, color: 0xf2b84f },
+  'Heart':          { x: -0.28, y: 6.4, z: 0.28, r: 0.30, color: 0xff5d7a },
+  'Lungs L':        { x: -0.56, y: 6.4, z: 0,    r: 0.34, color: 0x7bd389, label: 'Lungs' },
+  'Lungs R':        { x: 0.56,  y: 6.4, z: 0,    r: 0.34, color: 0x7bd389, label: 'Lungs' },
+  'Liver':          { x: 0.56,  y: 5.6, z: 0.28, r: 0.32, color: 0x9a6b3f },
+  'Stomach':        { x: -0.56, y: 5.3, z: 0.28, r: 0.26, color: 0xd97b5a },
+  'Kidney L':        { x: -0.56,y: 5.0, z: -0.28,r: 0.2,  color: 0x8b4f6b, label: 'Kidneys' },
+  'Kidney R':        { x: 0.56, y: 5.0, z: -0.28,r: 0.2,  color: 0x8b4f6b, label: 'Kidneys' },
+  'Pancreas':       { x: 0,     y: 5.3, z: 0.28, r: 0.18, color: 0xd9b35a },
+  'Small Intestine':{ x: 0,     y: 4.75,z: 0.28, r: 0.32, color: 0xc98a5a },
+  'Large Intestine':{ x: 0,     y: 4.5, z: 0.28, r: 0.34, color: 0xa5673f },
+  'Bladder':        { x: 0,     y: 4.2, z: 0.28, r: 0.2,  color: 0xf2d24e },
+  'Spleen':         { x: -0.84, y: 5.6, z: 0,    r: 0.16, color: 0x7a3f5a },
+};
+
+const VESSEL_CONNECTIONS = [
+  ['Heart', 'Lungs L'], ['Heart', 'Lungs R'], ['Heart', 'Brain'],
+  ['Heart', 'Liver'], ['Heart', 'Kidney L'], ['Heart', 'Kidney R'],
+  ['Heart', 'Stomach'], ['Liver', 'Small Intestine'], ['Pancreas', 'Small Intestine'],
+  ['Small Intestine', 'Large Intestine'], ['Large Intestine', 'Bladder'],
+  ['Kidney L', 'Bladder'], ['Kidney R', 'Bladder'], ['Spleen', 'Heart'],
+];
+
+let scene3D, camera3D, renderer3D, controls3D, organMeshes3D = {}, vesselLines3D = [];
+let is3DInitialized = false;
+let current3DView = false;
+
+function init3DScene() {
+  if (is3DInitialized) return;
+  is3DInitialized = true;
+
+  const container = document.getElementById('canvas3D');
+  scene3D = new THREE.Scene();
+  scene3D.background = new THREE.Color(0x10141c);
+
+  camera3D = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+  camera3D.position.set(0, 5.2, 8.5);
+
+  renderer3D = new THREE.WebGLRenderer({ antialias: true });
+  renderer3D.setSize(container.clientWidth, container.clientHeight);
+  renderer3D.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  container.appendChild(renderer3D.domElement);
+
+  controls3D = new THREE.OrbitControls(camera3D, renderer3D.domElement);
+  controls3D.target.set(0, 4.6, 0);
+  controls3D.enableDamping = true;
+  controls3D.dampingFactor = 0.08;
+  controls3D.minDistance = 3;
+  controls3D.maxDistance = 20;
+  controls3D.update();
+
+  scene3D.add(new THREE.HemisphereLight(0xbcd4ff, 0x30241a, 0.6));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+  dirLight.position.set(3, 8, 5);
+  scene3D.add(dirLight);
+  const fillLight = new THREE.DirectionalLight(0x8fb8ff, 0.3);
+  fillLight.position.set(-4, 4, -3);
+  scene3D.add(fillLight);
+
+  // voxel-based body — a real cube grid shaped like a human, rendered with InstancedMesh
+  // for performance. Deliberately blocky, not a smooth sculpted surface.
+  const VOXEL = 0.28;
+  const skinMat = new THREE.MeshStandardMaterial({ color: 0xe0a877, transparent: true, opacity: 0.4, roughness: 0.9 });
+
+  function getRowRects(gy) {
+    if (gy >= 30 && gy <= 33) return [{ x0: -2, x1: 2, z0: -2, z1: 1 }]; // head
+    if (gy === 28 || gy === 29) return [{ x0: -1, x1: 1, z0: -1, z1: 1 }]; // neck
+    if (gy >= 16 && gy <= 27) {
+      return [
+        { x0: -3, x1: 3, z0: -2, z1: 2 },   // torso
+        { x0: -5, x1: -4, z0: -1, z1: 1 },  // left arm
+        { x0: 4,  x1: 5,  z0: -1, z1: 1 },  // right arm
+      ];
+    }
+    if (gy >= 0 && gy <= 15) {
+      return [
+        { x0: -2, x1: -1, z0: -1, z1: 1 }, // left leg
+        { x0: 1,  x1: 2,  z0: -1, z1: 1 }, // right leg
+      ];
+    }
+    return [];
+  }
+
+  const voxelPositions = [];
+  for (let gy = 0; gy <= 33; gy++) {
+    getRowRects(gy).forEach(rect => {
+      for (let gx = rect.x0; gx <= rect.x1; gx++) {
+        for (let gz = rect.z0; gz <= rect.z1; gz++) {
+          voxelPositions.push([gx, gy, gz]);
+        }
+      }
+    });
+  }
+
+  const voxelGeo = new THREE.BoxGeometry(VOXEL * 0.92, VOXEL * 0.92, VOXEL * 0.92);
+  const voxelMesh = new THREE.InstancedMesh(voxelGeo, skinMat, voxelPositions.length);
+  const dummy = new THREE.Object3D();
+  voxelPositions.forEach(([gx, gy, gz], i) => {
+    dummy.position.set(gx * VOXEL, gy * VOXEL, gz * VOXEL);
+    dummy.updateMatrix();
+    voxelMesh.setMatrixAt(i, dummy.matrix);
+  });
+  scene3D.add(voxelMesh);
+
+  // world-space center for camera framing (body spans roughly y=0 to y=33*VOXEL)
+  const bodyTopY = 33 * VOXEL;
+
+  // organ meshes (also cubes, to match the pixel-art aesthetic — not spheres)
+  Object.keys(ORGAN_3D_POSITIONS).forEach(key => {
+    const cfg = ORGAN_3D_POSITIONS[key];
+    const mat = new THREE.MeshStandardMaterial({ color: cfg.color, roughness: 0.6, metalness: 0.05 });
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(cfg.r * 1.7, cfg.r * 1.7, cfg.r * 1.7), mat);
+    mesh.position.set(cfg.x, cfg.y, cfg.z);
+    mesh.userData.baseScale = 1;
+    mesh.userData.label = cfg.label || key;
+    scene3D.add(mesh);
+    organMeshes3D[key] = mesh;
+  });
+
+  // vessel lines (veins/arteries) connecting organs
+  const vesselMat = new THREE.LineBasicMaterial({ color: 0xff5d7a, transparent: true, opacity: 0.5 });
+  VESSEL_CONNECTIONS.forEach(([a, b]) => {
+    const pa = ORGAN_3D_POSITIONS[a], pb = ORGAN_3D_POSITIONS[b];
+    if (!pa || !pb) return;
+    const geo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(pa.x, pa.y, pa.z),
+      new THREE.Vector3(pb.x, pb.y, pb.z),
+    ]);
+    const line = new THREE.Line(geo, vesselMat);
+    scene3D.add(line);
+    vesselLines3D.push(line);
+  });
+
+  window.addEventListener('resize', () => {
+    if (!current3DView) return;
+    camera3D.aspect = container.clientWidth / container.clientHeight;
+    camera3D.updateProjectionMatrix();
+    renderer3D.setSize(container.clientWidth, container.clientHeight);
+  });
+}
+
+let t3D = 0;
+function animate3D() {
+  if (!current3DView) return;
+  t3D += 1 / 60;
+
+  const hr = parseInt(hrSlider.value);
+  const rr = parseInt(rrSlider.value);
+  const stress = parseInt(stressSlider.value);
+
+  const heartFreq = hr / 60;
+  const breathFreq = rr / 60;
+
+  const heartPhase = (t3D * heartFreq) % 1;
+  const heartPulse = Math.pow(Math.max(0, Math.sin(heartPhase * Math.PI)), 3);
+  if (organMeshes3D['Heart']) {
+    const scale = 1 + heartPulse * 0.35;
+    organMeshes3D['Heart'].scale.set(scale, scale, scale);
+  }
+
+  const breathPhase = Math.sin(t3D * breathFreq * 2 * Math.PI);
+  ['Lungs L', 'Lungs R'].forEach(key => {
+    if (organMeshes3D[key]) {
+      const scale = 1 + breathPhase * 0.12;
+      organMeshes3D[key].scale.set(scale, scale, scale);
+    }
+  });
+
+  if (organMeshes3D['Brain']) {
+    const flicker = 0.85 + 0.15 * Math.sin(t3D * 3);
+    const glow = Math.min(1.3, 1 + stress / 200) * flicker;
+    organMeshes3D['Brain'].scale.set(glow, glow, glow);
+  }
+
+  vesselLines3D.forEach((line, i) => {
+    const wavePhase = (t3D * heartFreq - i * 0.03) % 1;
+    line.material.opacity = 0.25 + (wavePhase < 0.3 ? (1 - wavePhase / 0.3) * 0.5 : 0);
+  });
+
+  controls3D.update();
+  renderer3D.render(scene3D, camera3D);
+  requestAnimationFrame(animate3D);
+}
+
+document.getElementById('btn3D').addEventListener('click', () => {
+  current3DView = true;
+  document.getElementById('btn3D').classList.add('active');
+  document.getElementById('btn2D').classList.remove('active');
+  document.getElementById('svg').classList.add('hidden');
+  document.getElementById('canvas3D').classList.add('active');
+  init3DScene();
+  const container = document.getElementById('canvas3D');
+  camera3D.aspect = container.clientWidth / container.clientHeight;
+  camera3D.updateProjectionMatrix();
+  renderer3D.setSize(container.clientWidth, container.clientHeight);
+  animate3D();
+});
+
+document.getElementById('btn2D').addEventListener('click', () => {
+  current3DView = false;
+  document.getElementById('btn2D').classList.add('active');
+  document.getElementById('btn3D').classList.remove('active');
+  document.getElementById('svg').classList.remove('hidden');
+  document.getElementById('canvas3D').classList.remove('active');
+});
+
 </script>
 </body>
 </html>
